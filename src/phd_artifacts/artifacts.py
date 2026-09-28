@@ -1,6 +1,8 @@
 import hashlib
 import platform
 import shutil
+import tomllib
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -8,6 +10,67 @@ import tomli_w
 
 from phd_artifacts.config import load_config
 from phd_artifacts.runs import Run
+
+
+@dataclass
+class Artifact:
+    path: Path
+    project: str
+    artifact_type: str
+    name: str
+    version: str
+    metadata: dict
+
+
+def discover_artifacts(
+    project_name: str | None = None,
+) -> list[Artifact]:
+    """Discover promoted artifacts in the artifact store."""
+
+    config = load_config()
+    artifact_root = Path(config["artifact_root"])
+
+    if not artifact_root.exists():
+        return []
+
+    artifacts: list[Artifact] = []
+
+    metadata_files = artifact_root.rglob("metadata.toml")
+
+    for metadata_path in metadata_files:
+        try:
+            with metadata_path.open("rb") as file:
+                metadata = tomllib.load(file)
+        except (OSError, tomllib.TOMLDecodeError):
+            continue
+
+        project = metadata.get("project")
+
+        if project_name is not None and project != project_name:
+            continue
+
+        artifact_path = metadata_path.parent
+
+        artifacts.append(
+            Artifact(
+                path=artifact_path,
+                project=project or "",
+                artifact_type=metadata.get("type", ""),
+                name=metadata.get("name", ""),
+                version=artifact_path.name,
+                metadata=metadata,
+            )
+        )
+
+    artifacts.sort(
+        key=lambda artifact: artifact.metadata.get(
+            "promoted_at",
+            "",
+        ),
+        reverse=True,
+    )
+
+    return artifacts
 
 
 def compute_sha256(path: Path, chunk_size: int = 1024 * 1024) -> str:
@@ -20,6 +83,34 @@ def compute_sha256(path: Path, chunk_size: int = 1024 * 1024) -> str:
             digest.update(chunk)
 
     return digest.hexdigest()
+
+
+def verify_artifact(artifact: Artifact) -> tuple[bool, str, str]:
+    """Verify the checksum of a checkpoint artifact."""
+
+    artifact_info = artifact.metadata.get("artifact", {})
+
+    checkpoint_name = artifact_info.get("checkpoint")
+    expected_sha256 = artifact_info.get("sha256")
+
+    if not checkpoint_name:
+        raise ValueError("Artifact does not define a checkpoint file.")
+
+    if not expected_sha256:
+        raise ValueError("Artifact does not contain a stored SHA-256 checksum.")
+
+    checkpoint_path = artifact.path / checkpoint_name
+
+    if not checkpoint_path.exists():
+        raise FileNotFoundError(f"Checkpoint file not found: {checkpoint_path}")
+
+    actual_sha256 = compute_sha256(checkpoint_path)
+
+    return (
+        actual_sha256 == expected_sha256,
+        expected_sha256,
+        actual_sha256,
+    )
 
 
 def get_checkpoint_store(project_name: str) -> Path:

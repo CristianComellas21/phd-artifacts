@@ -1,5 +1,6 @@
 import typer
 
+from phd_artifacts.cli.artifacts import app as artifacts_app
 from phd_artifacts.cli.init import init
 from phd_artifacts.cli.projects import app as projects_app
 from phd_artifacts.cli.promote import promote
@@ -18,6 +19,11 @@ app.add_typer(
 app.add_typer(
     runs_app,
     name="run",
+)
+
+app.add_typer(
+    artifacts_app,
+    name="artifact",
 )
 
 app.command()(promote)
