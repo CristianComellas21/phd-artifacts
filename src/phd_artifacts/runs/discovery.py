@@ -1,25 +1,9 @@
 import hashlib
-from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 
-from phd_artifacts.filtering import is_since, matches_text
-from phd_artifacts.projects import get_current_project, get_project
-
-
-@dataclass
-class Run:
-    id: str
-    path: Path
-    relative_path: Path
-
-    experiment: str | None
-    model: str | None
-
-    created_at: datetime | None
-    modified_at: datetime
-
-    has_checkpoints: bool
+from phd_artifacts.projects.service import get_current_project, get_project
+from phd_artifacts.runs.models import Run
 
 
 def _make_run_id(relative_path: Path) -> str:
@@ -60,28 +44,6 @@ def _parse_run_path(
         return experiment, model, created_at
 
     return None, None, None
-
-
-def filter_runs(
-    runs: list[Run],
-    experiment: str | None = None,
-    model: str | None = None,
-    checkpoints_only: bool = False,
-    since: timedelta | None = None,
-) -> list[Run]:
-    """Filter runs by their metadata."""
-
-    return [
-        run
-        for run in runs
-        if matches_text(run.experiment, experiment)
-        and matches_text(run.model, model)
-        and (not checkpoints_only or run.has_checkpoints)
-        and is_since(
-            run.created_at or run.modified_at,
-            since,
-        )
-    ]
 
 
 def discover_runs(

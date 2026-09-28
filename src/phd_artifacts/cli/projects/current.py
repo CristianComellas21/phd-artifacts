@@ -1,7 +1,7 @@
 import typer
 from rich.console import Console
 
-from phd_artifacts.projects import get_current_project
+from phd_artifacts.projects.service import get_current_project
 
 console = Console()
 

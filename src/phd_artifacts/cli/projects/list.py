@@ -1,7 +1,7 @@
 from rich.console import Console
 from rich.table import Table
 
-from phd_artifacts.projects import list_projects as get_projects
+from phd_artifacts.projects.service import list_projects as get_projects
 
 console = Console()
 

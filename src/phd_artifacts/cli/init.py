@@ -3,7 +3,7 @@ from pathlib import Path
 import typer
 from rich.console import Console
 
-from phd_artifacts.config import (
+from phd_artifacts.core.config import (
     config_exists,
     create_config,
     get_config_path,

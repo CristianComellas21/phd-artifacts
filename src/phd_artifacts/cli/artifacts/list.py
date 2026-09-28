@@ -2,11 +2,8 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from phd_artifacts.artifacts import (
-    discover_artifacts,
-    filter_artifacts,
-)
-from phd_artifacts.filtering import parse_duration
+from phd_artifacts.artifacts import discover_artifacts, filter_artifacts
+from phd_artifacts.core.filtering import parse_duration
 
 console = Console()
 

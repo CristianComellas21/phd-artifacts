@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from phd_artifacts.config import load_config, save_config
+from phd_artifacts.core.config import load_config, save_config
 
 
 def add_project(

@@ -1,7 +1,7 @@
 import typer
 from rich.console import Console
 
-from phd_artifacts.projects import remove_project
+from phd_artifacts.projects.service import remove_project
 
 console = Console()
 

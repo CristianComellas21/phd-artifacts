@@ -3,7 +3,7 @@ from pathlib import Path
 import typer
 from rich.console import Console
 
-from phd_artifacts.projects import add_project
+from phd_artifacts.projects.service import add_project
 
 console = Console()
 
