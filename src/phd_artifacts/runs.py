@@ -1,9 +1,9 @@
 import hashlib
-import re
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
 
+from phd_artifacts.filtering import is_since, matches_text
 from phd_artifacts.projects import get_current_project, get_project
 
 
@@ -62,30 +62,6 @@ def _parse_run_path(
     return None, None, None
 
 
-def parse_duration(value: str) -> timedelta:
-    """Parse durations such as 30m, 24h, 7d or 2w."""
-
-    match = re.fullmatch(r"(\d+)([mhdw])", value.strip().lower())
-
-    if not match:
-        raise ValueError("Invalid duration. Use formats such as 30m, 24h, 7d or 2w.")
-
-    amount = int(match.group(1))
-    unit = match.group(2)
-
-    match unit:
-        case "m":
-            return timedelta(minutes=amount)
-        case "h":
-            return timedelta(hours=amount)
-        case "d":
-            return timedelta(days=amount)
-        case "w":
-            return timedelta(weeks=amount)
-
-    raise ValueError(f"Unsupported duration unit: {unit}")
-
-
 def filter_runs(
     runs: list[Run],
     experiment: str | None = None,
@@ -93,27 +69,19 @@ def filter_runs(
     checkpoints_only: bool = False,
     since: timedelta | None = None,
 ) -> list[Run]:
-    """Filter discovered runs."""
+    """Filter runs by their metadata."""
 
-    filtered = runs
-
-    if experiment:
-        value = experiment.lower()
-        filtered = [run for run in filtered if run.experiment and value in run.experiment.lower()]
-
-    if model:
-        value = model.lower()
-        filtered = [run for run in filtered if run.model and value in run.model.lower()]
-
-    if checkpoints_only:
-        filtered = [run for run in filtered if run.has_checkpoints]
-
-    if since is not None:
-        threshold = datetime.now() - since
-
-        filtered = [run for run in filtered if (run.created_at or run.modified_at) >= threshold]
-
-    return filtered
+    return [
+        run
+        for run in runs
+        if matches_text(run.experiment, experiment)
+        and matches_text(run.model, model)
+        and (not checkpoints_only or run.has_checkpoints)
+        and is_since(
+            run.created_at or run.modified_at,
+            since,
+        )
+    ]
 
 
 def discover_runs(

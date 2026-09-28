@@ -27,7 +27,7 @@ def show_artifact(
 ):
     """Show information about a promoted artifact."""
 
-    artifacts = [artifact for artifact in discover_artifacts(project) if artifact.name == name]
+    artifacts = [artifact for artifact in discover_artifacts() if artifact.name == name]
 
     if version is not None:
         artifacts = [artifact for artifact in artifacts if artifact.version == version]

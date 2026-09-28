@@ -2,7 +2,11 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from phd_artifacts.artifacts import discover_artifacts
+from phd_artifacts.artifacts import (
+    discover_artifacts,
+    filter_artifacts,
+)
+from phd_artifacts.filtering import parse_duration
 
 console = Console()
 
@@ -14,11 +18,54 @@ def list_artifacts(
         "-p",
         help="Filter by project.",
     ),
+    artifact_type: str | None = typer.Option(
+        None,
+        "--type",
+        "-t",
+        help="Filter by artifact type.",
+    ),
+    name: str | None = typer.Option(
+        None,
+        "--name",
+        "-n",
+        help="Filter by artifact name.",
+    ),
+    experiment: str | None = typer.Option(
+        None,
+        "--experiment",
+        "-e",
+        help="Filter by experiment name.",
+    ),
+    model: str | None = typer.Option(
+        None,
+        "--model",
+        "-m",
+        help="Filter by model name.",
+    ),
+    since: str | None = typer.Option(
+        None,
+        "--since",
+        help="Show artifacts promoted within a duration such as 7d or 2w.",
+    ),
 ):
     """List promoted artifacts."""
 
-    artifacts = discover_artifacts(
-        project_name=project,
+    try:
+        since_delta = parse_duration(since) if since else None
+    except ValueError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(1) from None
+
+    artifacts = discover_artifacts()
+
+    artifacts = filter_artifacts(
+        artifacts,
+        project=project,
+        artifact_type=artifact_type,
+        name=name,
+        experiment=experiment,
+        model=model,
+        since=since_delta,
     )
 
     if not artifacts:

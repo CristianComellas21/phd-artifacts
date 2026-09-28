@@ -3,12 +3,13 @@ import platform
 import shutil
 import tomllib
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import tomli_w
 
 from phd_artifacts.config import load_config
+from phd_artifacts.filtering import is_since, matches_text
 from phd_artifacts.runs import Run
 
 
@@ -22,9 +23,61 @@ class Artifact:
     metadata: dict
 
 
-def discover_artifacts(
-    project_name: str | None = None,
+def filter_artifacts(
+    artifacts: list[Artifact],
+    project: str | None = None,
+    artifact_type: str | None = None,
+    name: str | None = None,
+    experiment: str | None = None,
+    model: str | None = None,
+    since: timedelta | None = None,
 ) -> list[Artifact]:
+    """Filter promoted artifacts by their metadata."""
+
+    filtered: list[Artifact] = []
+
+    for artifact in artifacts:
+        metadata = artifact.metadata
+
+        promoted_at: datetime | None = None
+        promoted_at_raw = metadata.get("promoted_at")
+
+        if promoted_at_raw:
+            try:
+                promoted_at = datetime.fromisoformat(promoted_at_raw)
+            except ValueError:
+                pass
+
+        if not matches_text(artifact.project, project):
+            continue
+
+        if not matches_text(artifact.artifact_type, artifact_type):
+            continue
+
+        if not matches_text(artifact.name, name):
+            continue
+
+        if not matches_text(
+            metadata.get("experiment"),
+            experiment,
+        ):
+            continue
+
+        if not matches_text(
+            metadata.get("model"),
+            model,
+        ):
+            continue
+
+        if not is_since(promoted_at, since):
+            continue
+
+        filtered.append(artifact)
+
+    return filtered
+
+
+def discover_artifacts() -> list[Artifact]:
     """Discover promoted artifacts in the artifact store."""
 
     config = load_config()
@@ -45,9 +98,6 @@ def discover_artifacts(
             continue
 
         project = metadata.get("project")
-
-        if project_name is not None and project != project_name:
-            continue
 
         artifact_path = metadata_path.parent
 
