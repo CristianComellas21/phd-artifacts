@@ -1,9 +1,8 @@
-from pathlib import Path
 import tomllib
+from pathlib import Path
 
 import tomli_w
 from platformdirs import user_config_dir
-
 
 APP_NAME = "phd-artifacts"
 CONFIG_FILENAME = "config.toml"
@@ -26,8 +25,7 @@ def load_config() -> dict:
 
     if not path.exists():
         raise FileNotFoundError(
-            f"Configuration file not found: {path}. "
-            "Run 'phd-artifact init' first."
+            f"Configuration file not found: {path}. Run 'phd-artifact init' first."
         )
 
     with path.open("rb") as f:

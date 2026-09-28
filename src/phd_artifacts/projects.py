@@ -22,11 +22,7 @@ def add_project(
     if not root.exists():
         raise FileNotFoundError(f"Project root does not exist: {root}")
 
-    logs = (
-        logs.expanduser().resolve()
-        if logs is not None
-        else root / "logs"
-    )
+    logs = logs.expanduser().resolve() if logs is not None else root / "logs"
 
     workspace_artifacts = (
         workspace_artifacts.expanduser().resolve()
@@ -82,11 +78,7 @@ def get_current_project(
 ) -> tuple[str, dict] | None:
     """Find the registered project containing the given path."""
 
-    current_path = (
-        path.expanduser().resolve()
-        if path is not None
-        else Path.cwd().resolve()
-    )
+    current_path = path.expanduser().resolve() if path is not None else Path.cwd().resolve()
 
     matches: list[tuple[str, dict, Path]] = []
 

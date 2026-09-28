@@ -9,7 +9,6 @@ from phd_artifacts.config import (
     get_config_path,
 )
 
-
 console = Console()
 
 
@@ -26,9 +25,7 @@ def init(
     config_path = get_config_path()
 
     if config_exists():
-        overwrite = typer.confirm(
-            f"Configuration already exists at {config_path}. Overwrite it?"
-        )
+        overwrite = typer.confirm(f"Configuration already exists at {config_path}. Overwrite it?")
 
         if not overwrite:
             raise typer.Exit()

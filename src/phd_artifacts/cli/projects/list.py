@@ -3,7 +3,6 @@ from rich.table import Table
 
 from phd_artifacts.projects import list_projects as get_projects
 
-
 console = Console()
 
 

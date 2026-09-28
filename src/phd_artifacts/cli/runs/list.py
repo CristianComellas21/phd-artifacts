@@ -4,7 +4,6 @@ from rich.table import Table
 
 from phd_artifacts.runs import get_project_runs
 
-
 console = Console()
 
 
@@ -37,13 +36,10 @@ def list_runs(
     except (KeyError, RuntimeError) as exc:
         message = exc.args[0] if exc.args else str(exc)
         console.print(f"[red]{message}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
 
     if not runs:
-        console.print(
-            f"No Hydra runs found for project "
-            f"'[bold]{project_name}[/bold]'."
-        )
+        console.print(f"No Hydra runs found for project '[bold]{project_name}[/bold]'.")
         return
 
     table = Table(
@@ -59,11 +55,7 @@ def list_runs(
             run.id,
             run.experiment or "-",
             run.model or "-",
-            (
-                run.created_at.strftime("%Y-%m-%d %H:%M")
-                if run.created_at
-                else "-"
-            ),
+            (run.created_at.strftime("%Y-%m-%d %H:%M") if run.created_at else "-"),
             "yes" if run.has_checkpoints else "",
         )
 
@@ -71,6 +63,4 @@ def list_runs(
     console.print(table)
 
     if len(runs) > limit:
-        console.print(
-            f"[dim]Showing {limit} of {len(runs)} runs.[/dim]"
-        )
+        console.print(f"[dim]Showing {limit} of {len(runs)} runs.[/dim]")

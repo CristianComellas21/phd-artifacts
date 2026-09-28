@@ -1,6 +1,6 @@
+import hashlib
 from dataclasses import dataclass
 from datetime import datetime
-import hashlib
 from pathlib import Path
 
 from phd_artifacts.projects import get_current_project, get_project
@@ -24,11 +24,7 @@ class Run:
 def _make_run_id(relative_path: Path) -> str:
     """Generate a stable short ID from the run path."""
 
-    return hashlib.sha1(
-        str(relative_path).encode("utf-8")
-    ).hexdigest()[:8]
-
-
+    return hashlib.sha1(str(relative_path).encode("utf-8")).hexdigest()[:8]
 
 
 def _parse_run_path(
@@ -56,17 +52,9 @@ def _parse_run_path(
         model_index = i - 2
         experiment_index = i - 3
 
-        model = (
-            parts[model_index]
-            if model_index >= 0
-            else None
-        )
+        model = parts[model_index] if model_index >= 0 else None
 
-        experiment = (
-            parts[experiment_index]
-            if experiment_index >= 0
-            else None
-        )
+        experiment = parts[experiment_index] if experiment_index >= 0 else None
 
         return experiment, model, created_at
 
@@ -98,9 +86,7 @@ def discover_runs(
             if relative_path.parts[0] == "test":
                 continue
 
-        experiment, model, created_at = _parse_run_path(
-            relative_path
-        )
+        experiment, model, created_at = _parse_run_path(relative_path)
 
         runs.append(
             Run(
@@ -110,9 +96,7 @@ def discover_runs(
                 experiment=experiment,
                 model=model,
                 created_at=created_at,
-                modified_at=datetime.fromtimestamp(
-                    run_path.stat().st_mtime
-                ),
+                modified_at=datetime.fromtimestamp(run_path.stat().st_mtime),
                 has_checkpoints=(run_path / "checkpoints").is_dir(),
             )
         )

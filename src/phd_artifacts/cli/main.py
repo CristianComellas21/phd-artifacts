@@ -4,7 +4,6 @@ from phd_artifacts.cli.init import init
 from phd_artifacts.cli.projects import app as projects_app
 from phd_artifacts.cli.runs import app as runs_app
 
-
 app = typer.Typer(
     name="phd-artifact",
     help="Manage research artifacts across projects and machines.",

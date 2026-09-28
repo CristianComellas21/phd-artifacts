@@ -3,7 +3,6 @@ from rich.console import Console
 
 from phd_artifacts.projects import remove_project
 
-
 console = Console()
 
 
@@ -18,11 +17,7 @@ def remove(
     try:
         remove_project(name)
     except KeyError:
-        console.print(
-            f"[red]Project '{name}' does not exist.[/red]"
-        )
-        raise typer.Exit(1)
+        console.print(f"[red]Project '{name}' does not exist.[/red]")
+        raise typer.Exit(1) from None
 
-    console.print(
-        f"[green]Project '{name}' removed.[/green]"
-    )
+    console.print(f"[green]Project '{name}' removed.[/green]")

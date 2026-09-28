@@ -5,7 +5,6 @@ from rich.console import Console
 
 from phd_artifacts.projects import add_project
 
-
 console = Console()
 
 

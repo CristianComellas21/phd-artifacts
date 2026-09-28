@@ -3,7 +3,6 @@ from rich.console import Console
 
 from phd_artifacts.projects import get_current_project
 
-
 console = Console()
 
 
@@ -13,10 +12,7 @@ def current():
     result = get_current_project()
 
     if result is None:
-        console.print(
-            "[yellow]Current directory does not belong "
-            "to a registered project.[/yellow]"
-        )
+        console.print("[yellow]Current directory does not belong to a registered project.[/yellow]")
         raise typer.Exit(1)
 
     name, project = result
