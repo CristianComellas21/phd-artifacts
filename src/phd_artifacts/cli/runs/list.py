@@ -2,7 +2,11 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from phd_artifacts.runs import get_project_runs
+from phd_artifacts.runs import (
+    filter_runs,
+    get_project_runs,
+    parse_duration,
+)
 
 console = Console()
 
@@ -25,6 +29,33 @@ def list_runs(
         "--tests",
         help="Include test runs.",
     ),
+    experiment: str | None = typer.Option(
+        None,
+        "--experiment",
+        "-e",
+        help="Filter by experiment name.",
+    ),
+    model: str | None = typer.Option(
+        None,
+        "--model",
+        "-m",
+        help="Filter by model name.",
+    ),
+    checkpoints_only: bool = typer.Option(
+        False,
+        "--checkpoints",
+        help="Show only runs containing checkpoints.",
+    ),
+    since: str | None = typer.Option(
+        None,
+        "--since",
+        help="Show runs newer than a duration such as 24h, 7d or 2w.",
+    ),
+    show_all: bool = typer.Option(
+        False,
+        "--all",
+        help="Show all matching runs.",
+    ),
 ):
     """List detected Hydra runs."""
 
@@ -38,6 +69,20 @@ def list_runs(
         console.print(f"[red]{message}[/red]")
         raise typer.Exit(1) from None
 
+    try:
+        since_delta = parse_duration(since) if since else None
+    except ValueError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(1) from None
+
+    runs = filter_runs(
+        runs,
+        experiment=experiment,
+        model=model,
+        checkpoints_only=checkpoints_only,
+        since=since_delta,
+    )
+
     if not runs:
         console.print(f"No Hydra runs found for project '[bold]{project_name}[/bold]'.")
         return
@@ -50,7 +95,9 @@ def list_runs(
         "CKPT",
     )
 
-    for run in runs[:limit]:
+    visible_runs = runs if show_all else runs[:limit]
+
+    for run in visible_runs:
         table.add_row(
             run.id,
             run.experiment or "-",
@@ -62,5 +109,5 @@ def list_runs(
     console.print(f"[bold]{project_name}[/bold]")
     console.print(table)
 
-    if len(runs) > limit:
-        console.print(f"[dim]Showing {limit} of {len(runs)} runs.[/dim]")
+    if not show_all and len(runs) > limit:
+        console.print(f"[dim]Showing {limit} of {len(runs)} matching runs.[/dim]")
