@@ -193,3 +193,44 @@ def get_project_runs(
     )
 
     return name, project, runs
+
+
+def get_run(
+    run_id: str,
+    project_name: str | None = None,
+    include_tests: bool = True,
+) -> tuple[str, dict, Run]:
+    """Find a run by its ID."""
+
+    name, project, runs = get_project_runs(
+        project_name=project_name,
+        include_tests=include_tests,
+    )
+
+    matches = [run for run in runs if run.id == run_id]
+
+    if not matches:
+        raise KeyError(f"Run '{run_id}' not found.")
+
+    if len(matches) > 1:
+        raise RuntimeError(f"Run ID '{run_id}' is ambiguous. This should not normally happen.")
+
+    return name, project, matches[0]
+
+
+def get_run_checkpoints(run: Run) -> list[Path]:
+    """Return checkpoint files contained in a run."""
+
+    checkpoint_dir = run.path / "checkpoints"
+
+    if not checkpoint_dir.is_dir():
+        return []
+
+    return sorted(
+        (
+            path
+            for path in checkpoint_dir.rglob("*")
+            if path.is_file() and path.suffix.lower() in {".ckpt", ".pth", ".pt"}
+        ),
+        key=lambda path: path.name,
+    )
