@@ -1,0 +1,29 @@
+import typer
+
+from phd_artifacts.cli.init import init
+from phd_artifacts.cli.projects import app as projects_app
+
+
+app = typer.Typer(
+    name="phd-artifact",
+    help="Manage research artifacts across projects and machines.",
+)
+
+app.add_typer(
+    projects_app,
+    name="project",
+)
+
+
+@app.callback()
+def main():
+    pass
+
+
+@app.command()
+def version():
+    """Show the current version."""
+    typer.echo("phd-artifacts 0.1.0")
+
+
+app.command()(init)

@@ -1,3 +1,3 @@
-from phd_artifacts.cli import app
+from phd_artifacts.cli.main import app
 
 __all__ = ["app"]
