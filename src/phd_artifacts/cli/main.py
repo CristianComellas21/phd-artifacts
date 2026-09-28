@@ -2,6 +2,7 @@ import typer
 
 from phd_artifacts.cli.init import init
 from phd_artifacts.cli.projects import app as projects_app
+from phd_artifacts.cli.runs import app as runs_app
 
 
 app = typer.Typer(
@@ -12,6 +13,11 @@ app = typer.Typer(
 app.add_typer(
     projects_app,
     name="project",
+)
+
+app.add_typer(
+    runs_app,
+    name="run",
 )
 
 
