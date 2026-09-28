@@ -12,3 +12,6 @@ wheels/
 # Editor directories
 .idea/
 .vscode/
+
+# Ruff
+.ruff_cache/
