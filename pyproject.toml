@@ -14,7 +14,7 @@ dependencies = [
 ]
 
 [project.scripts]
-phd-artifacts = "phd_artifacts:main"
+phd-artifact = "phd_artifacts:app"
 
 [build-system]
 requires = ["uv_build>=0.12.17,<0.13.0"]

@@ -1,2 +1,3 @@
-def main() -> None:
-    print("Hello from phd-artifacts!")
+from phd_artifacts.cli import app
+
+__all__ = ["app"]
