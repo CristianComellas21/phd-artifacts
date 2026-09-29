@@ -21,3 +21,19 @@ class ArtifactAmbiguousError(ArtifactError):
         self.artifacts = artifacts
 
         super().__init__(f"Multiple artifacts found for '{name}'.")
+
+
+class RemoteArtifactConflictError(ArtifactError):
+    def __init__(
+        self,
+        name: str,
+        remote_name: str,
+    ):
+        self.name = name
+        self.remote_name = remote_name
+
+        super().__init__(
+            f"Artifact '{name}' already exists on remote "
+            f"'{remote_name}' but differs from the local copy. "
+            "Use --force to overwrite it."
+        )

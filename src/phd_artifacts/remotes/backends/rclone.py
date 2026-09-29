@@ -9,6 +9,16 @@ from phd_artifacts.remotes.status import RemoteComparison, RemoteStatus
 class RcloneBackend:
     name = "rclone"
 
+    def get_target(
+        self,
+        remote: Remote,
+        remote_path: PurePosixPath,
+    ) -> str:
+        return self._join_target(
+            remote.target,
+            remote_path,
+        )
+
     def check(self, remote: Remote) -> None:
         self._check_available()
 
