@@ -7,6 +7,7 @@ from phd_artifacts.artifacts.exceptions import (
     ArtifactAmbiguousError,
     ArtifactNotFoundError,
 )
+from phd_artifacts.cli.artifacts.queries import get_artifacts
 
 
 def resolve_artifact_or_exit(
@@ -25,20 +26,37 @@ def resolve_artifact_or_exit(
         )
 
     except ArtifactNotFoundError as exc:
-        console.print(f"[red]Artifact '{exc.name}' not found.[/red]")
+        matches = get_artifacts(
+            name=exc.name,
+            project=project,
+        )
+
+        if matches:
+            console.print(f"[red]Artifact '{exc.name}' not found.[/red]\n")
+            console.print("[yellow]Possible matches:[/yellow]")
+
+            names = sorted({artifact.name for artifact in matches})
+
+            for candidate in names:
+                console.print(f"  {candidate}")
+        else:
+            console.print(f"[red]Artifact '{exc.name}' not found.[/red]")
+
         raise typer.Exit(1) from None
 
     except ArtifactAmbiguousError as exc:
         console.print(f"[yellow]Multiple versions found for '{exc.name}'.[/yellow]")
 
         table = Table(
+            "#",
             "Version",
             "Project",
             "Promoted",
         )
 
-        for artifact in exc.artifacts:
+        for index, artifact in enumerate(exc.artifacts, start=1):
             table.add_row(
+                str(index),
                 artifact.version,
                 artifact.project,
                 artifact.metadata.get("promoted_at", "-"),
@@ -46,6 +64,14 @@ def resolve_artifact_or_exit(
 
         console.print(table)
 
-        console.print("\nSpecify one with [bold]--version[/bold].")
+        selection = typer.prompt(
+            "Select version",
+            type=int,
+            default=1,
+        )
 
-        raise typer.Exit(1) from None
+        if selection < 1 or selection > len(exc.artifacts):
+            console.print("[red]Invalid selection.[/red]")
+            raise typer.Exit(1) from None
+
+        return exc.artifacts[selection - 1]

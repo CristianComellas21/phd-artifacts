@@ -36,10 +36,13 @@ def get_artifact(
 ) -> Artifact:
     """Resolve exactly one promoted artifact."""
 
-    artifacts = get_artifacts(
-        name=name,
-        project=project,
-    )
+    artifacts = discover_artifacts()
+
+    artifacts = [
+        artifact
+        for artifact in artifacts
+        if artifact.name == name and (project is None or artifact.project == project)
+    ]
 
     if version is not None:
         artifacts = [artifact for artifact in artifacts if artifact.version == version]
