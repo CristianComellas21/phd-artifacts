@@ -8,3 +8,9 @@ class RemoteEntry:
     path: PurePosixPath
     is_dir: bool
     size: int | None = None
+
+
+@dataclass
+class RemoteTreeEntry:
+    entry: RemoteEntry
+    depth: int

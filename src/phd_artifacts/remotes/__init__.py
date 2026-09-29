@@ -6,6 +6,7 @@ from phd_artifacts.remotes.service import (
     list_remote,
     list_remotes,
     remove_remote,
+    tree_remote,
 )
 
 __all__ = [
@@ -14,6 +15,7 @@ __all__ = [
     "get_remote",
     "list_remotes",
     "list_remote",
+    "tree_remote",
     "remove_remote",
     "check_remote",
 ]

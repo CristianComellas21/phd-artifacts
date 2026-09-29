@@ -1,3 +1,4 @@
+import builtins
 from pathlib import Path, PurePosixPath
 from typing import Protocol
 
@@ -23,7 +24,14 @@ class RemoteBackend(Protocol):
         self,
         remote: Remote,
         remote_path: PurePosixPath,
-    ) -> list[RemoteEntry]: ...
+    ) -> builtins.list[RemoteEntry]: ...
+
+    def list_recursive(
+        self,
+        remote: Remote,
+        remote_path: PurePosixPath,
+        max_depth: int | None = None,
+    ) -> builtins.list[RemoteEntry]: ...
 
     def push(
         self,

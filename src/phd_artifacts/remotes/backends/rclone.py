@@ -155,6 +155,63 @@ class RcloneBackend:
 
         return entries
 
+    def list_recursive(
+        self,
+        remote: Remote,
+        remote_path: PurePosixPath,
+        max_depth: int | None = None,
+    ) -> builtins.list[RemoteEntry]:
+        self.check(remote)
+
+        target = self.get_target(
+            remote=remote,
+            remote_path=remote_path,
+        )
+
+        command = [
+            "rclone",
+            "lsjson",
+            target,
+            "--recursive",
+        ]
+
+        if max_depth is not None:
+            command.extend(
+                [
+                    "--max-depth",
+                    str(max_depth + 1),
+                ]
+            )
+
+        result = subprocess.run(
+            command,
+            capture_output=True,
+            text=True,
+        )
+
+        if result.returncode != 0:
+            message = result.stderr.strip() or result.stdout.strip()
+
+            raise RuntimeError(f"Could not list remote path '{target}': {message}")
+
+        data = json.loads(result.stdout)
+
+        entries: builtins.list[RemoteEntry] = []
+
+        for item in data:
+            item_path = PurePosixPath(item["Path"])
+
+            entries.append(
+                RemoteEntry(
+                    name=item["Name"],
+                    path=remote_path / item_path,
+                    is_dir=item.get("IsDir", False),
+                    size=(None if item.get("IsDir", False) else item.get("Size")),
+                )
+            )
+
+        return entries
+
     @staticmethod
     def _check_available() -> None:
         if shutil.which("rclone") is None:

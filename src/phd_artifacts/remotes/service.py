@@ -2,7 +2,7 @@ from pathlib import PurePosixPath
 
 from phd_artifacts.core.config import load_config, save_config
 from phd_artifacts.remotes.backends.registry import get_backend
-from phd_artifacts.remotes.entries import RemoteEntry
+from phd_artifacts.remotes.entries import RemoteEntry, RemoteTreeEntry
 from phd_artifacts.remotes.exceptions import RemoteNotFoundError
 from phd_artifacts.remotes.models import Remote
 
@@ -121,3 +121,38 @@ def _parse_remote_path(path: str) -> PurePosixPath:
         raise ValueError("Remote path cannot contain '..'.")
 
     return remote_path
+
+
+def tree_remote(
+    name: str,
+    path: str = "",
+    max_depth: int | None = None,
+) -> list[RemoteTreeEntry]:
+    remote = get_remote(name)
+    backend = get_backend(remote.type)
+
+    root = _parse_remote_path(path)
+
+    entries = backend.list_recursive(
+        remote=remote,
+        remote_path=root,
+        max_depth=max_depth,
+    )
+
+    result: list[RemoteTreeEntry] = []
+
+    for entry in entries:
+        relative = entry.path.relative_to(root)
+
+        depth = len(relative.parts) - 1
+
+        result.append(
+            RemoteTreeEntry(
+                entry=entry,
+                depth=depth,
+            )
+        )
+
+    result.sort(key=lambda item: item.entry.path.parts)
+
+    return result
