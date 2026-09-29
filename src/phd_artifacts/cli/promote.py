@@ -5,7 +5,7 @@ from rich.console import Console
 
 from phd_artifacts.artifacts import promote_checkpoint
 from phd_artifacts.cli.runs.common import resolve_run_or_exit
-from phd_artifacts.runs import get_run, get_run_checkpoints
+from phd_artifacts.runs import get_run_checkpoints
 
 console = Console()
 
@@ -87,7 +87,6 @@ def promote(
 
     try:
         destination = promote_checkpoint(
-            project_name=project_name,
             run=run,
             checkpoint=selected,
             name=name,

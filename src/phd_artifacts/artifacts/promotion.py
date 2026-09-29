@@ -25,13 +25,12 @@ def get_artifact_version(run: Run) -> str:
 
 
 def promote_checkpoint(
-    project_name: str,
     run: Run,
     checkpoint: Path,
     name: str,
 ) -> Path:
     """Promote a run checkpoint into the persistent artifact store."""
-
+    project_name = run.project
     store = get_checkpoint_store(project_name)
     version = get_artifact_version(run)
 
