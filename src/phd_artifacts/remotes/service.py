@@ -38,7 +38,10 @@ def remove_remote(name: str) -> None:
     remotes = config.get("remotes", {})
 
     if name not in remotes:
-        raise RemoteNotFoundError(name)
+        raise RemoteNotFoundError(
+            name=name,
+            available=sorted(remotes),
+        )
 
     del remotes[name]
 
@@ -48,10 +51,14 @@ def remove_remote(name: str) -> None:
 def get_remote(name: str) -> Remote:
     config = load_config()
 
-    data = config.get("remotes", {}).get(name)
+    remotes = config.get("remotes", {})
+    data = remotes.get(name)
 
     if data is None:
-        raise RemoteNotFoundError(name)
+        raise RemoteNotFoundError(
+            name=name,
+            available=sorted(remotes),
+        )
 
     return Remote(
         name=name,

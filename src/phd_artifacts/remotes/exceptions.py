@@ -3,6 +3,19 @@ class RemoteError(Exception):
 
 
 class RemoteNotFoundError(RemoteError):
-    def __init__(self, name: str):
+    def __init__(
+        self,
+        name: str,
+        available: list[str],
+    ):
         self.name = name
-        super().__init__(f"Remote '{name}' not found.")
+        self.available = available
+
+        if available:
+            available_text = ", ".join(available)
+
+            message = f"Remote '{name}' not found. Available remotes: {available_text}"
+        else:
+            message = f"Remote '{name}' not found. No remotes are configured."
+
+        super().__init__(message)
