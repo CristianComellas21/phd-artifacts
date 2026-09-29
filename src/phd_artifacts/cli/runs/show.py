@@ -2,6 +2,7 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
+from phd_artifacts.core.display import print_yaml_file
 from phd_artifacts.runs import get_run, get_run_checkpoints
 
 console = Console()
@@ -14,6 +15,21 @@ def show_run(
         "--project",
         "-p",
         help="Project name. Defaults to the current project.",
+    ),
+    show_config: bool = typer.Option(
+        False,
+        "--config",
+        help="Show the resolved Hydra configuration.",
+    ),
+    show_overrides: bool = typer.Option(
+        False,
+        "--overrides",
+        help="Show the Hydra command-line overrides.",
+    ),
+    show_full: bool = typer.Option(
+        False,
+        "--full",
+        help="Show configuration and overrides.",
     ),
 ):
     """Show detailed information about a run."""
@@ -54,17 +70,30 @@ def show_run(
 
     if not checkpoints:
         console.print("  None")
-        return
+    else:
+        table = Table("#", "Name", "Size")
 
-    table = Table("#", "Name", "Size")
+        for index, checkpoint in enumerate(checkpoints, start=1):
+            size_mb = checkpoint.stat().st_size / (1024**2)
 
-    for index, checkpoint in enumerate(checkpoints, start=1):
-        size_mb = checkpoint.stat().st_size / (1024**2)
+            table.add_row(
+                str(index),
+                str(checkpoint.relative_to(run.path)),
+                f"{size_mb:.1f} MB",
+            )
 
-        table.add_row(
-            str(index),
-            str(checkpoint.relative_to(run.path)),
-            f"{size_mb:.1f} MB",
+        console.print(table)
+
+    if show_config or show_full:
+        print_yaml_file(
+            console,
+            run.path / ".hydra" / "config.yaml",
+            "Configuration",
         )
 
-    console.print(table)
+    if show_overrides or show_full:
+        print_yaml_file(
+            console,
+            run.path / ".hydra" / "overrides.yaml",
+            "Overrides",
+        )

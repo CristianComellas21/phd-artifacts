@@ -3,6 +3,7 @@ from rich.console import Console
 from rich.table import Table
 
 from phd_artifacts.artifacts import discover_artifacts
+from phd_artifacts.core.display import print_yaml_file
 
 console = Console()
 
@@ -24,6 +25,21 @@ def show_artifact(
         "-p",
         help="Project name.",
     ),
+    show_config: bool = typer.Option(
+        False,
+        "--config",
+        help="Show the stored Hydra configuration.",
+    ),
+    show_overrides: bool = typer.Option(
+        False,
+        "--overrides",
+        help="Show the stored Hydra overrides.",
+    ),
+    show_full: bool = typer.Option(
+        False,
+        "--full",
+        help="Show configuration and overrides.",
+    ),
 ):
     """Show information about a promoted artifact."""
 
@@ -31,6 +47,9 @@ def show_artifact(
 
     if version is not None:
         artifacts = [artifact for artifact in artifacts if artifact.version == version]
+
+    if project is not None:
+        artifacts = [artifact for artifact in artifacts if artifact.project == project]
 
     if not artifacts:
         console.print(f"[red]Artifact '{name}' not found.[/red]")
@@ -79,3 +98,17 @@ def show_artifact(
 
     if checksum:
         console.print(f"SHA256:      {checksum}")
+
+    if show_config or show_full:
+        print_yaml_file(
+            console,
+            artifact.path / "config.yaml",
+            "Configuration",
+        )
+
+    if show_overrides or show_full:
+        print_yaml_file(
+            console,
+            artifact.path / "overrides.yaml",
+            "Overrides",
+        )
