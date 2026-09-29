@@ -6,6 +6,7 @@ from pathlib import Path
 @dataclass
 class Run:
     id: str
+    project: str
     path: Path
     relative_path: Path
 

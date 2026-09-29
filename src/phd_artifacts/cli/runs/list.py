@@ -3,7 +3,8 @@ from rich.console import Console
 from rich.table import Table
 
 from phd_artifacts.core.filtering import parse_duration
-from phd_artifacts.runs import filter_runs, get_project_runs
+from phd_artifacts.projects.service import resolve_project
+from phd_artifacts.runs import get_runs
 
 console = Console()
 
@@ -57,31 +58,30 @@ def list_runs(
     """List detected Hydra runs."""
 
     try:
-        project_name, _, runs = get_project_runs(
-            project_name=project,
-            include_tests=include_tests,
-        )
-    except (KeyError, RuntimeError) as exc:
-        message = exc.args[0] if exc.args else str(exc)
-        console.print(f"[red]{message}[/red]")
-        raise typer.Exit(1) from None
-
-    try:
         since_delta = parse_duration(since) if since else None
     except ValueError as exc:
         console.print(f"[red]{exc}[/red]")
         raise typer.Exit(1) from None
 
-    runs = filter_runs(
-        runs,
-        experiment=experiment,
-        model=model,
-        checkpoints_only=checkpoints_only,
-        since=since_delta,
-    )
+    try:
+        project_name, _ = resolve_project(project)
+
+        runs = get_runs(
+            project=project_name,
+            experiment=experiment,
+            model=model,
+            checkpoints_only=checkpoints_only,
+            since=since_delta,
+            include_tests=include_tests,
+        )
+
+    except (KeyError, RuntimeError) as exc:
+        message = exc.args[0] if exc.args else str(exc)
+        console.print(f"[red]{message}[/red]")
+        raise typer.Exit(1) from None
 
     if not runs:
-        console.print(f"No Hydra runs found for project '[bold]{project_name}[/bold]'.")
+        console.print(f"No matching Hydra runs found for project '[bold]{project_name}[/bold]'.")
         return
 
     table = Table(

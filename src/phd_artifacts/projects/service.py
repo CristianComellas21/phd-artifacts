@@ -73,6 +73,24 @@ def get_project(name: str) -> dict:
     return projects[name]
 
 
+def resolve_project(
+    project_name: str | None = None,
+) -> tuple[str, dict]:
+    """Resolve a project name and its configuration."""
+
+    if project_name is not None:
+        return project_name, get_project(project_name)
+
+    current = get_current_project()
+
+    if current is None:
+        raise RuntimeError(
+            "Current directory does not belong to a registered project. Specify one with --project."
+        )
+
+    return current
+
+
 def get_current_project(
     path: Path | None = None,
 ) -> tuple[str, dict] | None:

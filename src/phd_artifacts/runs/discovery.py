@@ -2,7 +2,6 @@ import hashlib
 from datetime import datetime
 from pathlib import Path
 
-from phd_artifacts.projects.service import get_current_project, get_project
 from phd_artifacts.runs.models import Run
 
 
@@ -48,6 +47,7 @@ def _parse_run_path(
 
 def discover_runs(
     logs_path: Path,
+    project_name: str,
     include_tests: bool = False,
 ) -> list[Run]:
     """Discover Hydra runs inside a logs directory."""
@@ -66,7 +66,6 @@ def discover_runs(
         run_path = hydra_dir.parent
         relative_path = run_path.relative_to(logs_path)
 
-        # Ignore test runs by default.
         if not include_tests and relative_path.parts:
             if relative_path.parts[0] == "test":
                 continue
@@ -76,6 +75,7 @@ def discover_runs(
         runs.append(
             Run(
                 id=_make_run_id(relative_path),
+                project=project_name,
                 path=run_path,
                 relative_path=relative_path,
                 experiment=experiment,
@@ -92,60 +92,6 @@ def discover_runs(
     )
 
     return runs
-
-
-def get_project_runs(
-    project_name: str | None = None,
-    include_tests: bool = False,
-) -> tuple[str, dict, list[Run]]:
-    """Return all discovered runs for a project."""
-
-    if project_name is not None:
-        project = get_project(project_name)
-        name = project_name
-
-    else:
-        current = get_current_project()
-
-        if current is None:
-            raise RuntimeError(
-                "Current directory does not belong to a registered project. "
-                "Specify one with --project."
-            )
-
-        name, project = current
-
-    logs_path = Path(project["logs"])
-
-    runs = discover_runs(
-        logs_path,
-        include_tests=include_tests,
-    )
-
-    return name, project, runs
-
-
-def get_run(
-    run_id: str,
-    project_name: str | None = None,
-    include_tests: bool = True,
-) -> tuple[str, dict, Run]:
-    """Find a run by its ID."""
-
-    name, project, runs = get_project_runs(
-        project_name=project_name,
-        include_tests=include_tests,
-    )
-
-    matches = [run for run in runs if run.id == run_id]
-
-    if not matches:
-        raise KeyError(f"Run '{run_id}' not found.")
-
-    if len(matches) > 1:
-        raise RuntimeError(f"Run ID '{run_id}' is ambiguous. This should not normally happen.")
-
-    return name, project, matches[0]
 
 
 def get_run_checkpoints(run: Run) -> list[Path]:

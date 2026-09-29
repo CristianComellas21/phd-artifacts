@@ -2,14 +2,18 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
+from phd_artifacts.cli.runs.common import resolve_run_or_exit
 from phd_artifacts.core.display import print_yaml_file
-from phd_artifacts.runs import get_run, get_run_checkpoints
+from phd_artifacts.runs import get_run_checkpoints
 
 console = Console()
 
 
 def show_run(
-    run_id: str = typer.Argument(..., help="Run ID."),
+    run_id: str = typer.Argument(
+        ...,
+        help="Run ID.",
+    ),
     project: str | None = typer.Option(
         None,
         "--project",
@@ -34,18 +38,15 @@ def show_run(
 ):
     """Show detailed information about a run."""
 
-    try:
-        project_name, _, run = get_run(
-            run_id,
-            project_name=project,
-        )
-    except (KeyError, RuntimeError) as exc:
-        console.print(f"[red]{exc.args[0]}[/red]")
-        raise typer.Exit(1) from None
+    run = resolve_run_or_exit(
+        console=console,
+        run_id=run_id,
+        project=project,
+    )
 
     console.print(f"[bold]Run {run.id}[/bold]\n")
 
-    console.print(f"Project:    {project_name}")
+    console.print(f"Project:    {run.project}")
     console.print(f"Experiment: {run.experiment or '-'}")
     console.print(f"Model:      {run.model or '-'}")
 
@@ -58,7 +59,11 @@ def show_run(
 
     console.print("\n[bold]Hydra[/bold]")
 
-    for filename in ("config.yaml", "overrides.yaml", "hydra.yaml"):
+    for filename in (
+        "config.yaml",
+        "overrides.yaml",
+        "hydra.yaml",
+    ):
         path = hydra_dir / filename
 
         if path.exists():
@@ -73,7 +78,10 @@ def show_run(
     else:
         table = Table("#", "Name", "Size")
 
-        for index, checkpoint in enumerate(checkpoints, start=1):
+        for index, checkpoint in enumerate(
+            checkpoints,
+            start=1,
+        ):
             size_mb = checkpoint.stat().st_size / (1024**2)
 
             table.add_row(
@@ -87,13 +95,13 @@ def show_run(
     if show_config or show_full:
         print_yaml_file(
             console,
-            run.path / ".hydra" / "config.yaml",
+            hydra_dir / "config.yaml",
             "Configuration",
         )
 
     if show_overrides or show_full:
         print_yaml_file(
             console,
-            run.path / ".hydra" / "overrides.yaml",
+            hydra_dir / "overrides.yaml",
             "Overrides",
         )
