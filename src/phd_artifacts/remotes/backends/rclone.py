@@ -1,7 +1,10 @@
+import builtins
+import json
 import shutil
 import subprocess
 from pathlib import Path, PurePosixPath
 
+from phd_artifacts.remotes.entries import RemoteEntry
 from phd_artifacts.remotes.models import Remote
 from phd_artifacts.remotes.status import RemoteComparison, RemoteStatus
 
@@ -97,6 +100,61 @@ class RcloneBackend:
             status=RemoteStatus.DIFFERENT,
         )
 
+    def list(
+        self,
+        remote: Remote,
+        remote_path: PurePosixPath,
+    ) -> list[RemoteEntry]:
+        self.check(remote)
+
+        target = self.get_target(
+            remote=remote,
+            remote_path=remote_path,
+        )
+
+        result = subprocess.run(
+            [
+                "rclone",
+                "lsjson",
+                target,
+                "--max-depth",
+                "1",
+            ],
+            capture_output=True,
+            text=True,
+        )
+
+        if result.returncode != 0:
+            message = result.stderr.strip() or result.stdout.strip()
+
+            raise RuntimeError(f"Could not list remote path '{target}': {message}")
+
+        data = json.loads(result.stdout)
+
+        entries: list[RemoteEntry] = []
+
+        for item in data:
+            name = item["Name"]
+            is_dir = item.get("IsDir", False)
+
+            entries.append(
+                RemoteEntry(
+                    name=name,
+                    path=remote_path / name,
+                    is_dir=is_dir,
+                    size=None if is_dir else item.get("Size"),
+                )
+            )
+
+        entries.sort(
+            key=lambda entry: (
+                not entry.is_dir,
+                entry.name.lower(),
+            )
+        )
+
+        return entries
+
     @staticmethod
     def _check_available() -> None:
         if shutil.which("rclone") is None:
@@ -112,7 +170,7 @@ class RcloneBackend:
         return target.split(":", maxsplit=1)[0]
 
     @staticmethod
-    def _list_remotes() -> list[str]:
+    def _list_remotes() -> builtins.list[str]:
         result = subprocess.run(
             ["rclone", "listremotes"],
             capture_output=True,

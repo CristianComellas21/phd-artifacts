@@ -3,6 +3,7 @@ from phd_artifacts.remotes.service import (
     add_remote,
     check_remote,
     get_remote,
+    list_remote,
     list_remotes,
     remove_remote,
 )
@@ -12,6 +13,7 @@ __all__ = [
     "add_remote",
     "get_remote",
     "list_remotes",
+    "list_remote",
     "remove_remote",
     "check_remote",
 ]

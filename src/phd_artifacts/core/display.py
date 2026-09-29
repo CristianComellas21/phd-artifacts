@@ -30,3 +30,15 @@ def print_yaml_file(
     )
 
     console.print(syntax)
+
+
+def format_size(size: int) -> str:
+    value = float(size)
+
+    for unit in ("B", "KB", "MB", "GB", "TB"):
+        if value < 1024 or unit == "TB":
+            return f"{value:.1f} {unit}"
+
+        value /= 1024
+
+    return f"{size} B"

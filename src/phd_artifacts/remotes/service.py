@@ -1,5 +1,8 @@
+from pathlib import PurePosixPath
+
 from phd_artifacts.core.config import load_config, save_config
 from phd_artifacts.remotes.backends.registry import get_backend
+from phd_artifacts.remotes.entries import RemoteEntry
 from phd_artifacts.remotes.exceptions import RemoteNotFoundError
 from phd_artifacts.remotes.models import Remote
 
@@ -91,3 +94,30 @@ def check_remote(name: str) -> Remote:
     backend.check(remote)
 
     return remote
+
+
+def list_remote(
+    name: str,
+    path: str = "",
+) -> list[RemoteEntry]:
+    remote = get_remote(name)
+    backend = get_backend(remote.type)
+
+    remote_path = _parse_remote_path(path)
+
+    return backend.list(
+        remote=remote,
+        remote_path=remote_path,
+    )
+
+
+def _parse_remote_path(path: str) -> PurePosixPath:
+    remote_path = PurePosixPath(path)
+
+    if remote_path.is_absolute():
+        raise ValueError("Remote path must be relative to the configured target.")
+
+    if ".." in remote_path.parts:
+        raise ValueError("Remote path cannot contain '..'.")
+
+    return remote_path
