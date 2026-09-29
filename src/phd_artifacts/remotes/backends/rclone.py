@@ -1,5 +1,6 @@
 import shutil
 import subprocess
+from pathlib import Path, PurePosixPath
 
 from phd_artifacts.remotes.models import Remote
 
@@ -17,6 +18,34 @@ class RcloneBackend:
             raise RuntimeError(f"rclone remote '{remote_name}:' is not configured.")
 
         self._check_remote_access(remote_name)
+
+    def push(
+        self,
+        remote: Remote,
+        source: Path,
+        remote_path: PurePosixPath,
+    ) -> str:
+        self.check(remote)
+
+        destination = self._join_target(
+            remote.target,
+            remote_path,
+        )
+
+        result = subprocess.run(
+            [
+                "rclone",
+                "copy",
+                str(source),
+                destination,
+                "--progress",
+            ]
+        )
+
+        if result.returncode != 0:
+            raise RuntimeError(f"Failed to push '{source}' to '{destination}'.")
+
+        return destination
 
     @staticmethod
     def _check_available() -> None:
@@ -63,3 +92,15 @@ class RcloneBackend:
             message = result.stderr.strip() or result.stdout.strip()
 
             raise RuntimeError(f"Could not access rclone remote '{target}': {message}")
+
+    @staticmethod
+    def _join_target(
+        target: str,
+        path: PurePosixPath,
+    ) -> str:
+        base = target.rstrip("/")
+
+        if not path.parts:
+            return base
+
+        return f"{base}/{path.as_posix()}"

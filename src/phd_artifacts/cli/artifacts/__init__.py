@@ -1,6 +1,7 @@
 import typer
 
 from phd_artifacts.cli.artifacts.list import list_artifacts
+from phd_artifacts.cli.artifacts.push import push
 from phd_artifacts.cli.artifacts.show import show_artifact
 from phd_artifacts.cli.artifacts.verify import verify
 
@@ -11,3 +12,4 @@ app = typer.Typer(
 app.command("list")(list_artifacts)
 app.command("show")(show_artifact)
 app.command("verify")(verify)
+app.command("push")(push)
