@@ -16,7 +16,7 @@ class RcloneBackend:
         if remote_name not in configured_remotes:
             raise RuntimeError(f"rclone remote '{remote_name}:' is not configured.")
 
-        self._check_target(remote.target)
+        self._check_remote_access(remote_name)
 
     @staticmethod
     def _check_available() -> None:
@@ -44,7 +44,9 @@ class RcloneBackend:
         return [line.strip().rstrip(":") for line in result.stdout.splitlines() if line.strip()]
 
     @staticmethod
-    def _check_target(target: str) -> None:
+    def _check_remote_access(remote_name: str) -> None:
+        target = f"{remote_name}:"
+
         result = subprocess.run(
             [
                 "rclone",
@@ -60,4 +62,4 @@ class RcloneBackend:
         if result.returncode != 0:
             message = result.stderr.strip() or result.stdout.strip()
 
-            raise RuntimeError(f"Could not access rclone target '{target}': {message}")
+            raise RuntimeError(f"Could not access rclone remote '{target}': {message}")
