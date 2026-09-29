@@ -7,7 +7,7 @@ from phd_artifacts.artifacts.exceptions import (
     ArtifactAmbiguousError,
     ArtifactNotFoundError,
 )
-from phd_artifacts.cli.artifacts.queries import get_artifacts
+from phd_artifacts.artifacts.queries import get_artifacts
 
 
 def resolve_artifact_or_exit(
