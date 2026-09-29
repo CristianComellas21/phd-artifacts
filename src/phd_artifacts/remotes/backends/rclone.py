@@ -3,6 +3,7 @@ import subprocess
 from pathlib import Path, PurePosixPath
 
 from phd_artifacts.remotes.models import Remote
+from phd_artifacts.remotes.status import RemoteComparison, RemoteStatus
 
 
 class RcloneBackend:
@@ -46,6 +47,45 @@ class RcloneBackend:
             raise RuntimeError(f"Failed to push '{source}' to '{destination}'.")
 
         return destination
+
+    def compare(
+        self,
+        remote: Remote,
+        source: Path,
+        remote_path: PurePosixPath,
+    ) -> RemoteComparison:
+        self.check(remote)
+
+        destination = self._join_target(
+            remote.target,
+            remote_path,
+        )
+
+        if not self._exists(destination):
+            return RemoteComparison(
+                status=RemoteStatus.MISSING,
+            )
+
+        result = subprocess.run(
+            [
+                "rclone",
+                "check",
+                str(source),
+                destination,
+                "--one-way",
+            ],
+            capture_output=True,
+            text=True,
+        )
+
+        if result.returncode == 0:
+            return RemoteComparison(
+                status=RemoteStatus.UP_TO_DATE,
+            )
+
+        return RemoteComparison(
+            status=RemoteStatus.DIFFERENT,
+        )
 
     @staticmethod
     def _check_available() -> None:
@@ -104,3 +144,19 @@ class RcloneBackend:
             return base
 
         return f"{base}/{path.as_posix()}"
+
+    @staticmethod
+    def _exists(target: str) -> bool:
+        result = subprocess.run(
+            [
+                "rclone",
+                "lsf",
+                target,
+                "--max-depth",
+                "1",
+            ],
+            capture_output=True,
+            text=True,
+        )
+
+        return result.returncode == 0
