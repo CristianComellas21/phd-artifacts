@@ -1,7 +1,8 @@
 import typer
 from rich.console import Console
 
-from phd_artifacts.artifacts import discover_artifacts, verify_artifact
+from phd_artifacts.artifacts import verify_artifact
+from phd_artifacts.cli.artifacts.common import resolve_artifact_or_exit
 
 console = Console()
 
@@ -26,22 +27,12 @@ def verify(
 ):
     """Verify the integrity of a promoted artifact."""
 
-    artifacts = [artifact for artifact in discover_artifacts() if artifact.name == name]
-
-    if version is not None:
-        artifacts = [artifact for artifact in artifacts if artifact.version == version]
-
-    if not artifacts:
-        console.print(f"[red]Artifact '{name}' not found.[/red]")
-        raise typer.Exit(1)
-
-    if len(artifacts) > 1:
-        console.print(
-            f"[yellow]Multiple versions found for '{name}'. Specify one with --version.[/yellow]"
-        )
-        raise typer.Exit(1)
-
-    artifact = artifacts[0]
+    artifact = resolve_artifact_or_exit(
+        console=console,
+        name=name,
+        version=version,
+        project=project,
+    )
 
     try:
         valid, expected, actual = verify_artifact(artifact)

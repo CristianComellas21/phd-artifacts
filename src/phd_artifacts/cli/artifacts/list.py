@@ -2,7 +2,7 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from phd_artifacts.artifacts import discover_artifacts, filter_artifacts
+from phd_artifacts.artifacts import get_artifacts
 from phd_artifacts.core.filtering import parse_duration
 
 console = Console()
@@ -53,12 +53,9 @@ def list_artifacts(
         console.print(f"[red]{exc}[/red]")
         raise typer.Exit(1) from None
 
-    artifacts = discover_artifacts()
-
-    artifacts = filter_artifacts(
-        artifacts,
-        project=project,
+    artifacts = get_artifacts(
         artifact_type=artifact_type,
+        project=project,
         name=name,
         experiment=experiment,
         model=model,

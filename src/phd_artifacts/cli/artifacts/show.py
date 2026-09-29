@@ -1,8 +1,7 @@
 import typer
 from rich.console import Console
-from rich.table import Table
 
-from phd_artifacts.artifacts import discover_artifacts
+from phd_artifacts.cli.artifacts.common import resolve_artifact_or_exit
 from phd_artifacts.core.display import print_yaml_file
 
 console = Console()
@@ -43,36 +42,13 @@ def show_artifact(
 ):
     """Show information about a promoted artifact."""
 
-    artifacts = [artifact for artifact in discover_artifacts() if artifact.name == name]
+    artifact = resolve_artifact_or_exit(
+        console=console,
+        name=name,
+        version=version,
+        project=project,
+    )
 
-    if version is not None:
-        artifacts = [artifact for artifact in artifacts if artifact.version == version]
-
-    if project is not None:
-        artifacts = [artifact for artifact in artifacts if artifact.project == project]
-
-    if not artifacts:
-        console.print(f"[red]Artifact '{name}' not found.[/red]")
-        raise typer.Exit(1)
-
-    if len(artifacts) > 1:
-        console.print(f"[yellow]Multiple versions found for '{name}'.[/yellow]")
-
-        table = Table("Version", "Project", "Promoted")
-
-        for artifact in artifacts:
-            table.add_row(
-                artifact.version,
-                artifact.project,
-                artifact.metadata.get("promoted_at", "-"),
-            )
-
-        console.print(table)
-
-        console.print("\nSpecify one with [bold]--version[/bold].")
-        raise typer.Exit(1)
-
-    artifact = artifacts[0]
     metadata = artifact.metadata
 
     console.print(f"[bold]{artifact.name}[/bold]\n")
