@@ -32,6 +32,7 @@ def discover_artifacts() -> list[Artifact]:
         artifacts.append(
             Artifact(
                 path=artifact_path,
+                relative_path=artifact_path.relative_to(artifact_root),
                 project=project or "",
                 artifact_type=metadata.get("type", ""),
                 name=metadata.get("name", ""),
