@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from phd_artifacts.core.config import load_config, save_config
+from phd_artifacts.projects.exceptions import ProjectNotFoundError, ProjectNotResolvedError
 
 
 def add_project(
@@ -49,7 +50,7 @@ def remove_project(name: str) -> None:
     projects = config.get("projects", {})
 
     if name not in projects:
-        raise KeyError(name)
+        raise ProjectNotFoundError(name)
 
     del projects[name]
     save_config(config)
@@ -68,7 +69,7 @@ def get_project(name: str) -> dict:
     projects = list_projects()
 
     if name not in projects:
-        raise KeyError(name)
+        raise ProjectNotFoundError(name)
 
     return projects[name]
 
@@ -84,9 +85,7 @@ def resolve_project(
     current = get_current_project()
 
     if current is None:
-        raise RuntimeError(
-            "Current directory does not belong to a registered project. Specify one with --project."
-        )
+        raise ProjectNotResolvedError()
 
     return current
 

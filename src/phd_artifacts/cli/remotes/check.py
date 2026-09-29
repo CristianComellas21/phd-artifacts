@@ -2,6 +2,7 @@ import typer
 from rich.console import Console
 
 from phd_artifacts.remotes import check_remote
+from phd_artifacts.remotes.exceptions import RemoteNotFoundError
 
 console = Console()
 
@@ -16,7 +17,7 @@ def check(
 
     try:
         remote = check_remote(name)
-    except (KeyError, ValueError, RuntimeError) as exc:
+    except (RemoteNotFoundError, ValueError, RuntimeError) as exc:
         console.print(f"[red]{exc}[/red]")
         raise typer.Exit(1) from None
 

@@ -4,6 +4,7 @@ import typer
 from rich.console import Console
 
 from phd_artifacts.artifacts import promote_checkpoint
+from phd_artifacts.cli.runs.common import resolve_run_or_exit
 from phd_artifacts.runs import get_run, get_run_checkpoints
 
 console = Console()
@@ -35,14 +36,11 @@ def promote(
 ):
     """Promote a run checkpoint to the persistent artifact store."""
 
-    try:
-        project_name, _, run = get_run(
-            run_id,
-            project_name=project,
-        )
-    except (KeyError, RuntimeError) as exc:
-        console.print(f"[red]{exc.args[0]}[/red]")
-        raise typer.Exit(1) from None
+    run = resolve_run_or_exit(
+        console=console,
+        run_id=run_id,
+        project=project,
+    )
 
     checkpoints = get_run_checkpoints(run)
 

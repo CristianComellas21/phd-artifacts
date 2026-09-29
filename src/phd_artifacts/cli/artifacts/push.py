@@ -3,6 +3,8 @@ from rich.console import Console
 
 from phd_artifacts.artifacts.transfer import push_artifact
 from phd_artifacts.cli.artifacts.common import resolve_artifact_or_exit
+from phd_artifacts.remotes.backends.exceptions import UnsupportedBackendError
+from phd_artifacts.remotes.exceptions import RemoteNotFoundError
 
 console = Console()
 
@@ -46,7 +48,13 @@ def push(
             remote_name=remote,
         )
 
-    except (KeyError, ValueError, RuntimeError, FileNotFoundError) as exc:
+    except (
+        RemoteNotFoundError,
+        UnsupportedBackendError,
+        ValueError,
+        RuntimeError,
+        FileNotFoundError,
+    ) as exc:
         console.print(f"[red]{exc}[/red]")
         raise typer.Exit(1) from None
 

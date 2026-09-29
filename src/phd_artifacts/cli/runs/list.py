@@ -3,6 +3,7 @@ from rich.console import Console
 from rich.table import Table
 
 from phd_artifacts.core.filtering import parse_duration
+from phd_artifacts.projects.exceptions import ProjectError
 from phd_artifacts.projects.service import resolve_project
 from phd_artifacts.runs import get_runs
 
@@ -75,7 +76,7 @@ def list_runs(
             include_tests=include_tests,
         )
 
-    except (KeyError, RuntimeError) as exc:
+    except ProjectError as exc:
         message = exc.args[0] if exc.args else str(exc)
         console.print(f"[red]{message}[/red]")
         raise typer.Exit(1) from None

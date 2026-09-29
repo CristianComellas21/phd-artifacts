@@ -1,5 +1,6 @@
 from phd_artifacts.core.config import load_config, save_config
 from phd_artifacts.remotes.backends.registry import get_backend
+from phd_artifacts.remotes.exceptions import RemoteNotFoundError
 from phd_artifacts.remotes.models import Remote
 
 
@@ -37,7 +38,7 @@ def remove_remote(name: str) -> None:
     remotes = config.get("remotes", {})
 
     if name not in remotes:
-        raise KeyError(f"Remote '{name}' not found.")
+        raise RemoteNotFoundError(name)
 
     del remotes[name]
 
@@ -50,7 +51,7 @@ def get_remote(name: str) -> Remote:
     data = config.get("remotes", {}).get(name)
 
     if data is None:
-        raise KeyError(f"Remote '{name}' not found.")
+        raise RemoteNotFoundError(name)
 
     return Remote(
         name=name,
