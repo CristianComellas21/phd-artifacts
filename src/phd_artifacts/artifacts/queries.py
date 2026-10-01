@@ -1,5 +1,9 @@
 from datetime import datetime, timedelta
 
+from phd_artifacts.artifacts.config import (
+    filter_artifacts_by_config,
+    filter_remote_artifacts_by_config,
+)
 from phd_artifacts.artifacts.discovery import (
     discover_artifacts,
     discover_remote_artifacts,
@@ -7,6 +11,7 @@ from phd_artifacts.artifacts.discovery import (
 from phd_artifacts.artifacts.exceptions import ArtifactAmbiguousError, ArtifactNotFoundError
 from phd_artifacts.artifacts.filtering import filter_artifacts
 from phd_artifacts.artifacts.models import Artifact, RemoteArtifact
+from phd_artifacts.core.config_filtering import ConfigFilter
 from phd_artifacts.core.filtering import is_since, matches_text
 
 
@@ -17,12 +22,14 @@ def get_artifacts(
     experiment: str | None = None,
     model: str | None = None,
     since: timedelta | None = None,
+    config_filters: list[ConfigFilter] | None = None,
+    config_any_filters: list[ConfigFilter] | None = None,
 ) -> list[Artifact]:
     """Get promoted artifacts matching the requested filters."""
 
     artifacts = discover_artifacts()
 
-    return filter_artifacts(
+    artifacts = filter_artifacts(
         artifacts,
         project=project,
         artifact_type=artifact_type,
@@ -31,6 +38,15 @@ def get_artifacts(
         model=model,
         since=since,
     )
+
+    if config_filters or config_any_filters:
+        artifacts = filter_artifacts_by_config(
+            artifacts,
+            filters=config_filters or [],
+            any_filters=config_any_filters or [],
+        )
+
+    return artifacts
 
 
 def get_artifact(
@@ -71,6 +87,8 @@ def get_remote_artifacts(
     experiment: str | None = None,
     model: str | None = None,
     since: timedelta | None = None,
+    config_filters: list[ConfigFilter] | None = None,
+    config_any_filters: list[ConfigFilter] | None = None,
 ) -> list[RemoteArtifact]:
     artifacts = discover_remote_artifacts(remote_name)
 
@@ -113,5 +131,12 @@ def get_remote_artifacts(
             continue
 
         filtered.append(artifact)
+
+    if filtered or config_any_filters:
+        artifacts = filter_remote_artifacts_by_config(
+            artifacts,
+            filters=config_filters or [],
+            any_filters=config_any_filters or [],
+        )
 
     return filtered

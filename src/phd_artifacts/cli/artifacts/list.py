@@ -8,6 +8,7 @@ from rich.table import Table
 from phd_artifacts.artifacts import get_artifacts
 from phd_artifacts.artifacts.models import Artifact, RemoteArtifact
 from phd_artifacts.artifacts.queries import get_remote_artifacts
+from phd_artifacts.core.config_filtering import ConfigFilter, parse_config_filters
 from phd_artifacts.core.filtering import parse_duration
 from phd_artifacts.remotes.backends.exceptions import UnsupportedBackendError
 from phd_artifacts.remotes.exceptions import RemoteError
@@ -24,6 +25,8 @@ def _get_artifacts_for_list(
     model: str | None,
     since: timedelta | None,
     remote: str | None,
+    config_filters: list[ConfigFilter],
+    config_any_filters: list[ConfigFilter],
 ) -> list[Artifact] | list[RemoteArtifact]:
     if remote is None:
         return get_artifacts(
@@ -33,6 +36,8 @@ def _get_artifacts_for_list(
             experiment=experiment,
             model=model,
             since=since,
+            config_filters=config_filters,
+            config_any_filters=config_any_filters,
         )
 
     return get_remote_artifacts(
@@ -43,6 +48,8 @@ def _get_artifacts_for_list(
         experiment=experiment,
         model=model,
         since=since,
+        config_filters=config_filters,
+        config_any_filters=config_any_filters,
     )
 
 
@@ -142,11 +149,34 @@ def list_artifacts(
         "-r",
         help="List artifacts stored on a remote instead of locally.",
     ),
+    config: list[str] | None = typer.Option(
+        None,
+        "--config",
+        help=(
+            "Filter by config value using an exact path. "
+            "Can be repeated. Quote expressions, e.g. "
+            "--config 'dataset.fixed_variance=15'."
+        ),
+    ),
+    config_any: list[str] | None = typer.Option(
+        None,
+        "--config-any",
+        help=(
+            "Filter by a config key found anywhere in the config. "
+            "Can be repeated. Quote expressions, e.g. "
+            "--config-any 'fixed_variance=15'."
+        ),
+    ),
 ):
     """List promoted artifacts."""
 
     try:
         since_delta = parse_duration(since) if since else None
+
+        config_filters = parse_config_filters(config or [])
+
+        config_any_filters = parse_config_filters(config_any or [])
+
     except ValueError as exc:
         console.print(f"[red]{exc}[/red]")
         raise typer.Exit(1) from None
@@ -160,6 +190,8 @@ def list_artifacts(
             model=model,
             since=since_delta,
             remote=remote,
+            config_filters=config_filters,
+            config_any_filters=config_any_filters,
         )
 
     except (
