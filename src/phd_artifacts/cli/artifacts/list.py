@@ -1,11 +1,103 @@
+from datetime import timedelta
+from typing import cast
+
 import typer
 from rich.console import Console
 from rich.table import Table
 
 from phd_artifacts.artifacts import get_artifacts
+from phd_artifacts.artifacts.models import Artifact, RemoteArtifact
+from phd_artifacts.artifacts.queries import get_remote_artifacts
 from phd_artifacts.core.filtering import parse_duration
+from phd_artifacts.remotes.backends.exceptions import UnsupportedBackendError
+from phd_artifacts.remotes.exceptions import RemoteError
 
 console = Console()
+
+
+def _get_artifacts_for_list(
+    *,
+    project: str | None,
+    artifact_type: str | None,
+    name: str | None,
+    experiment: str | None,
+    model: str | None,
+    since: timedelta | None,
+    remote: str | None,
+) -> list[Artifact] | list[RemoteArtifact]:
+    if remote is None:
+        return get_artifacts(
+            project=project,
+            artifact_type=artifact_type,
+            name=name,
+            experiment=experiment,
+            model=model,
+            since=since,
+        )
+
+    return get_remote_artifacts(
+        remote_name=remote,
+        project=project,
+        artifact_type=artifact_type,
+        name=name,
+        experiment=experiment,
+        model=model,
+        since=since,
+    )
+
+
+def _print_empty_message(
+    remote: str | None,
+) -> None:
+    if remote is None:
+        console.print("No promoted artifacts found.")
+        return
+
+    console.print(f"No promoted artifacts found on remote '{remote}'.")
+
+
+def _render_local_artifacts(
+    artifacts: list[Artifact],
+) -> None:
+    table = Table(
+        "Project",
+        "Type",
+        "Name",
+        "Version",
+    )
+
+    for artifact in artifacts:
+        table.add_row(
+            artifact.project,
+            artifact.artifact_type,
+            artifact.name,
+            artifact.version,
+        )
+
+    console.print(table)
+
+
+def _render_remote_artifacts(
+    artifacts: list[RemoteArtifact],
+) -> None:
+    table = Table(
+        "Remote",
+        "Project",
+        "Type",
+        "Name",
+        "Version",
+    )
+
+    for artifact in artifacts:
+        table.add_row(
+            artifact.remote,
+            artifact.project,
+            artifact.artifact_type,
+            artifact.name,
+            artifact.version,
+        )
+
+    console.print(table)
 
 
 def list_artifacts(
@@ -44,6 +136,12 @@ def list_artifacts(
         "--since",
         help="Show artifacts promoted within a duration such as 7d or 2w.",
     ),
+    remote: str | None = typer.Option(
+        None,
+        "--remote",
+        "-r",
+        help="List artifacts stored on a remote instead of locally.",
+    ),
 ):
     """List promoted artifacts."""
 
@@ -53,32 +151,30 @@ def list_artifacts(
         console.print(f"[red]{exc}[/red]")
         raise typer.Exit(1) from None
 
-    artifacts = get_artifacts(
-        artifact_type=artifact_type,
-        project=project,
-        name=name,
-        experiment=experiment,
-        model=model,
-        since=since_delta,
-    )
-
-    if not artifacts:
-        console.print("No promoted artifacts found.")
-        return
-
-    table = Table(
-        "Project",
-        "Type",
-        "Name",
-        "Version",
-    )
-
-    for artifact in artifacts:
-        table.add_row(
-            artifact.project,
-            artifact.artifact_type,
-            artifact.name,
-            artifact.version,
+    try:
+        artifacts = _get_artifacts_for_list(
+            project=project,
+            artifact_type=artifact_type,
+            name=name,
+            experiment=experiment,
+            model=model,
+            since=since_delta,
+            remote=remote,
         )
 
-    console.print(table)
+    except (
+        RemoteError,
+        UnsupportedBackendError,
+        RuntimeError,
+    ) as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(1) from None
+
+    if not artifacts:
+        _print_empty_message(remote)
+        return
+
+    if remote is None:
+        _render_local_artifacts(cast(list[Artifact], artifacts))
+    else:
+        _render_remote_artifacts(cast(list[RemoteArtifact], artifacts))
