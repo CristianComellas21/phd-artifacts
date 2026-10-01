@@ -88,7 +88,7 @@ def get_remote_artifacts(
             except ValueError:
                 pass
 
-        if not matches_text(artifact.project, project): 
+        if not matches_text(artifact.project, project):
             continue
 
         if not matches_text(artifact.artifact_type, artifact_type):

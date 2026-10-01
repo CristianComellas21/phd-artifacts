@@ -2,6 +2,7 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
+from phd_artifacts.core.config_filtering import parse_config_filters
 from phd_artifacts.core.filtering import parse_duration
 from phd_artifacts.projects.exceptions import ProjectError
 from phd_artifacts.projects.service import resolve_project
@@ -55,11 +56,37 @@ def list_runs(
         "--all",
         help="Show all matching runs.",
     ),
+    config: list[str] | None = typer.Option(
+        None,
+        "--config",
+        help=(
+            "Filter by Hydra config value. Can be repeated. "
+            "Quote expressions, e.g. "
+            "--config 'dataset.fixed_variance=15' or "
+            "--config 'trainer.max_epochs>=10000'."
+        ),
+    ),
+    config_any: list[str] | None = typer.Option(
+        None,
+        "--config-any",
+        help=(
+            "Filter by a config key found anywhere in the Hydra config. "
+            "Can be repeated. Quote expressions, e.g. "
+            "--config-any 'sigma=15'."
+        ),
+    ),
 ):
     """List detected Hydra runs."""
 
     try:
         since_delta = parse_duration(since) if since else None
+    except ValueError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(1) from None
+
+    try:
+        config_filters = parse_config_filters(config or [])
+        config_any_filters = parse_config_filters(config_any or [])
     except ValueError as exc:
         console.print(f"[red]{exc}[/red]")
         raise typer.Exit(1) from None
@@ -74,6 +101,8 @@ def list_runs(
             checkpoints_only=checkpoints_only,
             since=since_delta,
             include_tests=include_tests,
+            config_filters=config_filters,
+            config_any_filters=config_any_filters,
         )
 
     except ProjectError as exc:

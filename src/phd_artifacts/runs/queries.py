@@ -1,7 +1,9 @@
 from datetime import timedelta
 from pathlib import Path
 
+from phd_artifacts.core.config_filtering import ConfigFilter
 from phd_artifacts.projects.service import resolve_project
+from phd_artifacts.runs.config import filter_runs_by_config
 from phd_artifacts.runs.discovery import discover_runs
 from phd_artifacts.runs.exceptions import (
     RunAmbiguousError,
@@ -18,6 +20,8 @@ def get_runs(
     checkpoints_only: bool = False,
     since: timedelta | None = None,
     include_tests: bool = False,
+    config_filters: list[ConfigFilter] | None = None,
+    config_any_filters: list[ConfigFilter] | None = None,
 ) -> list[Run]:
     """Get runs matching the requested filters."""
 
@@ -29,13 +33,22 @@ def get_runs(
         include_tests=include_tests,
     )
 
-    return filter_runs(
+    runs = filter_runs(
         runs,
         experiment=experiment,
         model=model,
         checkpoints_only=checkpoints_only,
         since=since,
     )
+
+    if config_filters or config_any_filters:
+        runs = filter_runs_by_config(
+            runs,
+            filters=config_filters or [],
+            any_filters=config_any_filters or [],
+        )
+
+    return runs
 
 
 def get_run(
