@@ -212,6 +212,33 @@ class RcloneBackend:
 
         return entries
 
+    def read_text(
+        self,
+        remote: Remote,
+        remote_path: PurePosixPath,
+    ) -> str:
+        target = self.get_target(
+            remote=remote,
+            remote_path=remote_path,
+        )
+
+        result = subprocess.run(
+            [
+                "rclone",
+                "cat",
+                target,
+            ],
+            capture_output=True,
+            text=True,
+        )
+
+        if result.returncode != 0:
+            message = result.stderr.strip() or result.stdout.strip()
+
+            raise RuntimeError(f"Could not read remote file '{target}': {message}")
+
+        return result.stdout
+
     @staticmethod
     def _check_available() -> None:
         if shutil.which("rclone") is None:

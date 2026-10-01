@@ -32,6 +32,13 @@ class RemoteBackend(Protocol):
         remote_path: PurePosixPath,
         max_depth: int | None = None,
     ) -> builtins.list[RemoteEntry]: ...
+    
+    def read_text(
+        self,
+        remote: Remote,
+        remote_path: PurePosixPath,
+    ) -> str:
+        ...
 
     def push(
         self,
