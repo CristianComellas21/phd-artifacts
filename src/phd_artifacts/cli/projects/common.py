@@ -2,8 +2,7 @@ import shlex
 from dataclasses import dataclass
 from pathlib import Path
 
-import typer
-
+from phd_artifacts.cli.ui import text
 from phd_artifacts.projects.models import ProjectConfig
 
 
@@ -23,14 +22,14 @@ def prompt_project_config(
     """Interactively collect project configuration."""
 
     if existing is None:
-        root = Path(typer.prompt("Project root")).expanduser().resolve()
+        root = Path(text("Project root")).expanduser().resolve()
 
         default_logs = root / "logs"
         default_artifacts = root / "artifacts"
 
         logs = (
             Path(
-                typer.prompt(
+                text(
                     "Logs directory",
                     default=str(default_logs),
                 )
@@ -41,7 +40,7 @@ def prompt_project_config(
 
         workspace_artifacts = (
             Path(
-                typer.prompt(
+                text(
                     "Workspace artifacts directory",
                     default=str(default_artifacts),
                 )
@@ -50,28 +49,16 @@ def prompt_project_config(
             .resolve()
         )
 
-        python_raw = typer.prompt(
-            "Python executable [optional]",
-            default="",
-            show_default=False,
-        )
+        python_raw = text("Python executable [optional]", default="")
 
-        exporter = typer.prompt(
-            "Portable exporter [optional]",
-            default="",
-            show_default=False,
-        )
+        exporter = text("Portable exporter [optional]", default="")
 
-        exporter_args_raw = typer.prompt(
-            "Exporter arguments [optional]",
-            default="",
-            show_default=False,
-        )
+        exporter_args_raw = text("Exporter arguments [optional]", default="")
 
     else:
         root = (
             Path(
-                typer.prompt(
+                text(
                     "Project root",
                     default=existing["root"],
                 )
@@ -82,7 +69,7 @@ def prompt_project_config(
 
         logs = (
             Path(
-                typer.prompt(
+                text(
                     "Logs directory",
                     default=existing["logs"],
                 )
@@ -93,7 +80,7 @@ def prompt_project_config(
 
         workspace_artifacts = (
             Path(
-                typer.prompt(
+                text(
                     "Workspace artifacts directory",
                     default=existing["workspace_artifacts"],
                 )
@@ -102,28 +89,16 @@ def prompt_project_config(
             .resolve()
         )
 
-        python_raw = typer.prompt(
-            "Python executable",
-            default=existing.get("python", ""),
-            show_default=bool(existing.get("python")),
-        )
+        python_raw = text("Python executable", default=existing.get("python", ""))
 
-        exporter = typer.prompt(
-            "Portable exporter",
-            default=existing.get("exporter", ""),
-            show_default=bool(existing.get("exporter")),
-        )
+        exporter = text("Portable exporter", default=existing.get("exporter", ""))
 
         existing_args = existing.get(
             "exporter_args",
             [],
         )
 
-        exporter_args_raw = typer.prompt(
-            "Exporter arguments",
-            default=shlex.join(existing_args),
-            show_default=bool(existing_args),
-        )
+        exporter_args_raw = text("Exporter arguments", default=shlex.join(existing_args))
 
     python = Path(python_raw).expanduser().resolve() if python_raw else None
 

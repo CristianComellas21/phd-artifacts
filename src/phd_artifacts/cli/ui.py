@@ -1,8 +1,10 @@
 import questionary
+import typer
 from rich.console import Console
 
 from phd_artifacts.cli.theme import (
-    QUESTIONARY_DEFAULTS,
+    QUESTIONARY_COMMON,
+    QUESTIONARY_SELECT,
     RICH_THEME,
 )
 
@@ -12,24 +14,34 @@ console = Console(theme=RICH_THEME)
 def select(
     message: str,
     choices: list[questionary.Choice],
-) -> object | None:
-    return questionary.select(
+) -> object:
+    result = questionary.select(
         message,
         choices=choices,
-        **QUESTIONARY_DEFAULTS,
+        **QUESTIONARY_SELECT,
     ).ask()
+
+    if result is None:
+        raise typer.Exit(0)
+
+    return result
 
 
 def checkbox(
     message: str,
     choices: list[questionary.Choice],
-) -> list[object] | None:
-    return questionary.checkbox(
+) -> list[object]:
+    result = questionary.checkbox(
         message,
         choices=choices,
         instruction="Space to select, Enter to confirm",
-        **QUESTIONARY_DEFAULTS,
+        **QUESTIONARY_SELECT,
     ).ask()
+
+    if result is None:
+        raise typer.Exit(0)
+
+    return result
 
 
 def confirm(
@@ -39,18 +51,26 @@ def confirm(
     result = questionary.confirm(
         message,
         default=default,
-        **QUESTIONARY_DEFAULTS,
+        **QUESTIONARY_COMMON,
     ).ask()
+
+    if result is None:
+        raise typer.Exit(0)
 
     return bool(result)
 
 
 def text(
     message: str,
-    default: str | None = None,
-) -> str | None:
-    return questionary.text(
+    default: str = "",
+) -> str:
+    result = questionary.text(
         message,
-        default=default or "",
-        **QUESTIONARY_DEFAULTS,
+        default=default,
+        **QUESTIONARY_COMMON,
     ).ask()
+
+    if result is None:
+        raise typer.Exit(0)
+
+    return result

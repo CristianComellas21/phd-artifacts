@@ -29,8 +29,12 @@ QUESTIONARY_STYLE = Style(
 )
 
 
-QUESTIONARY_DEFAULTS = {
+QUESTIONARY_COMMON = {
     "style": QUESTIONARY_STYLE,
-    "qmark": "❓",
+    "qmark": "›",
+}
+
+QUESTIONARY_SELECT = {
+    **QUESTIONARY_COMMON,
     "pointer": "❯",
 }

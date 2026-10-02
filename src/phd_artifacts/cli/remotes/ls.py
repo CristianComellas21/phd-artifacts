@@ -1,6 +1,7 @@
 import typer
 from rich.table import Table
 
+from phd_artifacts.cli.remotes.common import resolve_remote_name
 from phd_artifacts.cli.ui import console
 from phd_artifacts.core.display import format_size
 from phd_artifacts.remotes import list_remote
@@ -22,9 +23,11 @@ def ls(
 ):
     """List files and directories on a remote."""
 
+    remote_name = resolve_remote_name(name)
+
     try:
         entries = list_remote(
-            name=name,
+            name=remote_name,
             path=path or "",
         )
 

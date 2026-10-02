@@ -3,7 +3,7 @@ from pathlib import Path
 import typer
 
 from phd_artifacts.cli.projects.common import prompt_project_config
-from phd_artifacts.cli.ui import console
+from phd_artifacts.cli.ui import confirm, console, text
 from phd_artifacts.core.config import (
     config_exists,
     create_config,
@@ -25,14 +25,14 @@ def init(
     config_path = get_config_path()
 
     if config_exists():
-        overwrite = typer.confirm(f"Configuration already exists at {config_path}. Overwrite it?")
+        overwrite = confirm(f"Configuration already exists at {config_path}. Overwrite it?")
 
         if not overwrite:
             raise typer.Exit()
 
     if artifact_root is None:
         artifact_root = Path(
-            typer.prompt(
+            text(
                 "Artifact store",
                 default="~/phd/artifact-store",
             )
@@ -57,7 +57,7 @@ def init(
     ):
         return
 
-    name = typer.prompt("Project name").strip()
+    name = text("Project name").strip()
 
     values = prompt_project_config()
 

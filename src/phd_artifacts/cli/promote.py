@@ -8,7 +8,7 @@ from phd_artifacts.artifacts import promote_checkpoints
 from phd_artifacts.artifacts.checkpoints import infer_checkpoint_role
 from phd_artifacts.artifacts.models import CheckpointSelection
 from phd_artifacts.cli.runs.common import resolve_run_or_exit
-from phd_artifacts.cli.ui import checkbox, console
+from phd_artifacts.cli.ui import checkbox, console, text
 from phd_artifacts.runs import get_run_checkpoints
 
 
@@ -21,7 +21,7 @@ def _build_selections(
         role = infer_checkpoint_role(path)
 
         if role is None:
-            role = typer.prompt(f"Role for {path.name}").strip()
+            role = text(f"Role for {path.name}").strip()
 
         if not role:
             console.print(f"[error]Role cannot be empty for {path.name}.[/error]")
