@@ -7,7 +7,7 @@ from phd_artifacts.projects.service import resolve_project
 console = Console()
 
 
-def current_project():
+def current():
     """Show the current project."""
 
     try:
