@@ -153,3 +153,82 @@ def get_current_project(
     name, project, _ = matches[0]
 
     return name, project
+
+
+def update_project(
+    name: str,
+    *,
+    root: Path | None = None,
+    logs: Path | None = None,
+    workspace_artifacts: Path | None = None,
+    python: Path | None = None,
+    exporter: str | None = None,
+    exporter_args: list[str] | None = None,
+    clear_python: bool = False,
+    clear_exporter: bool = False,
+) -> ProjectConfig:
+    """Update an existing project configuration."""
+
+    config = load_config()
+    projects = list_projects()
+
+    if name not in projects:
+        raise ProjectNotFoundError(name)
+
+    project = projects[name].copy()
+
+    if root is not None:
+        root = root.expanduser().resolve()
+
+        if not root.is_dir():
+            raise FileNotFoundError(f"Project root does not exist: {root}")
+
+        project["root"] = str(root)
+
+    project_root = Path(project["root"])
+
+    if logs is not None:
+        project["logs"] = str(logs.expanduser().resolve())
+
+    if workspace_artifacts is not None:
+        project["workspace_artifacts"] = str(workspace_artifacts.expanduser().resolve())
+
+    if clear_python:
+        project.pop("python", None)
+
+    elif python is not None:
+        python = python.expanduser().resolve()
+
+        if not python.is_file():
+            raise FileNotFoundError(f"Python executable not found: {python}")
+
+        if not os.access(python, os.X_OK):
+            raise ValueError(f"Python is not executable: {python}")
+
+        project["python"] = str(python)
+
+    if clear_exporter:
+        project.pop("exporter", None)
+        project.pop("exporter_args", None)
+
+    elif exporter is not None:
+        exporter_path = (project_root / exporter).resolve()
+
+        if not exporter_path.is_file():
+            raise FileNotFoundError(f"Exporter not found: {exporter_path}")
+
+        project["exporter"] = exporter
+
+    if exporter_args is not None:
+        if "exporter" not in project:
+            raise ValueError("Exporter arguments require an exporter.")
+
+        if exporter_args:
+            project["exporter_args"] = exporter_args
+        else:
+            project.pop("exporter_args", None)
+
+    config.setdefault("projects", {})[name] = project
+    save_config(config)
+
+    return project
