@@ -3,8 +3,9 @@ from pathlib import Path
 import typer
 from rich.console import Console
 
+from phd_artifacts.cli.projects.common import prompt_project_config
 from phd_artifacts.projects.exceptions import ProjectNotFoundError
-from phd_artifacts.projects.service import update_project
+from phd_artifacts.projects.service import get_project, update_project
 
 console = Console()
 
@@ -57,6 +58,22 @@ def configure(
 ):
     """Update a project configuration."""
 
+    interactive = (
+        all(
+            value is None
+            for value in (
+                root,
+                logs,
+                workspace_artifacts,
+                python,
+                exporter,
+                exporter_arg,
+            )
+        )
+        and not clear_python
+        and not clear_exporter
+    )
+
     if python is not None and clear_python:
         console.print("[red]Cannot use --python and --clear-python together.[/red]")
         raise typer.Exit(1)
@@ -66,17 +83,35 @@ def configure(
         raise typer.Exit(1)
 
     try:
-        project = update_project(
-            name=name,
-            root=root,
-            logs=logs,
-            workspace_artifacts=workspace_artifacts,
-            python=python,
-            exporter=exporter,
-            exporter_args=exporter_arg,
-            clear_python=clear_python,
-            clear_exporter=clear_exporter,
-        )
+        if interactive:
+            existing = get_project(name)
+
+            values = prompt_project_config(
+                existing=existing,
+            )
+
+            project = update_project(
+                name=name,
+                root=values.root,
+                logs=values.logs,
+                workspace_artifacts=values.workspace_artifacts,
+                python=values.python,
+                exporter=values.exporter,
+                exporter_args=values.exporter_args,
+            )
+
+        else:
+            project = update_project(
+                name=name,
+                root=root,
+                logs=logs,
+                workspace_artifacts=workspace_artifacts,
+                python=python,
+                exporter=exporter,
+                exporter_args=exporter_arg,
+                clear_python=clear_python,
+                clear_exporter=clear_exporter,
+            )
 
     except (
         ProjectNotFoundError,

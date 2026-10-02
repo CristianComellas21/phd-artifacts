@@ -3,6 +3,7 @@ from pathlib import Path
 import typer
 from rich.console import Console
 
+from phd_artifacts.cli.projects.common import prompt_project_config
 from phd_artifacts.projects.service import add_project
 
 console = Console()
@@ -14,7 +15,7 @@ def add(
         help="Project name.",
     ),
     root: Path = typer.Option(
-        ...,
+        None,
         "--root",
         "-r",
         help="Project root directory.",
@@ -46,6 +47,16 @@ def add(
     ),
 ):
     """Register a research project."""
+
+    if root is None:
+        values = prompt_project_config()
+
+        root = values.root
+        logs = values.logs
+        workspace_artifacts = values.workspace_artifacts
+        python = values.python
+        exporter = values.exporter
+        exporter_arg = values.exporter_args
 
     try:
         project = add_project(
