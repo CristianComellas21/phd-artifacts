@@ -14,6 +14,7 @@ from phd_artifacts.artifacts.transfer import (
     PullResult,
     PushAction,
     PushResult,
+    pull_artifact,
     push_artifact,
 )
 from phd_artifacts.artifacts.verification import verify_artifact
@@ -35,5 +36,6 @@ __all__ = [
     "PushResult",
     "PullAction",
     "PullResult",
+    "pull_artifact",
     "RemoteArtifactConflictError",
 ]

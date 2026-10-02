@@ -1,9 +1,13 @@
 import shutil
+import tomllib
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path, PurePosixPath
 
-from phd_artifacts.artifacts.exceptions import RemoteArtifactConflictError
+from phd_artifacts.artifacts.exceptions import (
+    LocalArtifactConflictError,
+    RemoteArtifactConflictError,
+)
 from phd_artifacts.artifacts.models import Artifact, RemoteArtifact
 from phd_artifacts.artifacts.verification import verify_artifact
 from phd_artifacts.core.config import load_config
@@ -129,7 +133,7 @@ def pull_artifact(
             )
 
         if not force:
-            raise RemoteArtifactConflictError(
+            raise LocalArtifactConflictError(
                 name=artifact.name,
                 remote_name=artifact.remote,
             )
@@ -148,6 +152,36 @@ def pull_artifact(
         remote_path=artifact.path,
         destination=destination,
     )
+
+    metadata_path = destination / "metadata.toml"
+
+    try:
+        with metadata_path.open("rb") as file:
+            metadata = tomllib.load(file)
+
+        local_artifact = Artifact(
+            path=destination,
+            relative_path=Path(*artifact.path.parts),
+            project=artifact.project,
+            artifact_type=artifact.artifact_type,
+            name=artifact.name,
+            version=artifact.version,
+            metadata=metadata,
+        )
+
+        verification = verify_artifact(local_artifact)
+
+        if not verification.ok:
+            raise RuntimeError(
+                f"Downloaded artifact '{artifact.name}' failed integrity verification."
+            )
+
+    except Exception:
+        shutil.rmtree(
+            destination,
+            ignore_errors=True,
+        )
+        raise
 
     return PullResult(
         destination=destination,
