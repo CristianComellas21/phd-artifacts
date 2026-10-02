@@ -1,5 +1,6 @@
 import typer
 from rich.console import Console
+from rich.table import Table
 
 from phd_artifacts.artifacts import verify_artifact
 from phd_artifacts.cli.artifacts.common import resolve_artifact_or_exit
@@ -35,19 +36,34 @@ def verify(
     )
 
     try:
-        valid, expected, actual = verify_artifact(artifact)
-    except (ValueError, FileNotFoundError) as exc:
+        result = verify_artifact(artifact)
+    except ValueError as exc:
         console.print(f"[red]{exc}[/red]")
         raise typer.Exit(1) from None
 
     console.print(f"[bold]{artifact.name}[/bold]")
-    console.print(f"Version:   {artifact.version}")
-    console.print(f"Expected:  {expected}")
-    console.print(f"Actual:    {actual}")
+    console.print(f"Version: {artifact.version}")
 
-    if valid:
-        console.print("[green]Status:    OK[/green]")
+    table = Table(
+        "File",
+        "Exists",
+        "Size",
+        "SHA256",
+    )
+
+    for file_result in result.files:
+        table.add_row(
+            file_result.path,
+            "[green]yes[/green]" if file_result.exists else "[red]no[/red]",
+            "[green]OK[/green]" if file_result.size_ok else "[red]FAILED[/red]",
+            "[green]OK[/green]" if file_result.sha256_ok else "[red]FAILED[/red]",
+        )
+
+    console.print(table)
+
+    if result.ok:
+        console.print("[green]Status: OK[/green]")
         return
 
-    console.print("[red]Status:    FAILED[/red]")
+    console.print("[red]Status: FAILED[/red]")
     raise typer.Exit(1)
