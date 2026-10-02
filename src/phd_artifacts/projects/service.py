@@ -1,7 +1,12 @@
 from pathlib import Path
+from typing import cast
 
 from phd_artifacts.core.config import load_config, save_config
-from phd_artifacts.projects.exceptions import ProjectNotFoundError, ProjectNotResolvedError
+from phd_artifacts.projects.exceptions import (
+    ProjectNotFoundError,
+    ProjectNotResolvedError,
+)
+from phd_artifacts.projects.models import ProjectConfig
 
 
 def add_project(
@@ -9,11 +14,18 @@ def add_project(
     root: Path,
     logs: Path | None = None,
     workspace_artifacts: Path | None = None,
-) -> dict:
+    python: Path | None = None,
+    exporter: str | None = None,
+    exporter_args: list[str] | None = None,
+) -> ProjectConfig:
     """Register a new research project."""
 
     config = load_config()
-    projects = config.setdefault("projects", {})
+
+    projects = cast(
+        dict[str, ProjectConfig],
+        config.setdefault("projects", {}),
+    )
 
     if name in projects:
         raise ValueError(f"Project '{name}' already exists.")
@@ -31,13 +43,23 @@ def add_project(
         else root / "artifacts"
     )
 
-    project = {
+    project: ProjectConfig = {
         "root": str(root),
         "logs": str(logs),
         "workspace_artifacts": str(workspace_artifacts),
     }
 
+    if python is not None:
+        project["python"] = str(python.expanduser().resolve())
+
+    if exporter is not None:
+        project["exporter"] = exporter
+
+    if exporter_args:
+        project["exporter_args"] = exporter_args
+
     projects[name] = project
+
     save_config(config)
 
     return project
@@ -56,14 +78,14 @@ def remove_project(name: str) -> None:
     save_config(config)
 
 
-def list_projects() -> dict:
+def list_projects() -> dict[str, ProjectConfig]:
     """Return all registered projects."""
 
     config = load_config()
     return config.get("projects", {})
 
 
-def get_project(name: str) -> dict:
+def get_project(name: str) -> ProjectConfig:
     """Return a project by name."""
 
     projects = list_projects()
@@ -76,7 +98,7 @@ def get_project(name: str) -> dict:
 
 def resolve_project(
     project_name: str | None = None,
-) -> tuple[str, dict]:
+) -> tuple[str, ProjectConfig]:
     """Resolve a project name and its configuration."""
 
     if project_name is not None:
@@ -92,12 +114,12 @@ def resolve_project(
 
 def get_current_project(
     path: Path | None = None,
-) -> tuple[str, dict] | None:
+) -> tuple[str, ProjectConfig] | None:
     """Find the registered project containing the given path."""
 
     current_path = path.expanduser().resolve() if path is not None else Path.cwd().resolve()
 
-    matches: list[tuple[str, dict, Path]] = []
+    matches: list[tuple[str, ProjectConfig, Path]] = []
 
     for name, project in list_projects().items():
         root = Path(project["root"]).resolve()
