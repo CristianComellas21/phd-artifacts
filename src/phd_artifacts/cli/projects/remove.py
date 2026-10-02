@@ -1,6 +1,6 @@
 import typer
 
-from phd_artifacts.cli.ui import console
+from phd_artifacts.cli.ui import confirm, console
 from phd_artifacts.projects.exceptions import ProjectNotFoundError
 from phd_artifacts.projects.service import remove_project
 
@@ -12,6 +12,12 @@ def remove(
     ),
 ):
     """Remove a registered project."""
+
+    if not confirm(
+        f"Remove project '{name}'?",
+        default=False,
+    ):
+        raise typer.Exit(0)
 
     try:
         remove_project(name)
