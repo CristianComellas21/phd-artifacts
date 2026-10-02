@@ -3,18 +3,20 @@ from pathlib import Path
 import typer
 from rich.console import Console
 
+from phd_artifacts.cli.projects.common import prompt_project_config
 from phd_artifacts.core.config import (
     config_exists,
     create_config,
     get_config_path,
 )
+from phd_artifacts.projects.service import add_project
 
 console = Console()
 
 
 def init(
-    artifact_root: Path = typer.Option(
-        ...,
+    artifact_root: Path | None = typer.Option(
+        None,
         "--artifact-root",
         "-r",
         help="Root directory for promoted research artifacts.",
@@ -30,11 +32,46 @@ def init(
         if not overwrite:
             raise typer.Exit()
 
+    if artifact_root is None:
+        artifact_root = Path(
+            typer.prompt(
+                "Artifact store",
+                default="~/phd/artifact-store",
+            )
+        )
+
     artifact_root = artifact_root.expanduser().resolve()
-    artifact_root.mkdir(parents=True, exist_ok=True)
+
+    artifact_root.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
 
     create_config(artifact_root)
 
-    console.print("[green]Configuration created successfully.[/green]")
+    console.print("\n[green]Configuration created successfully.[/green]")
     console.print(f"Config:    {config_path}")
     console.print(f"Artifacts: {artifact_root}")
+
+    if not typer.confirm(
+        "\nRegister a project now?",
+        default=True,
+    ):
+        return
+
+    name = typer.prompt("Project name").strip()
+
+    values = prompt_project_config()
+
+    project = add_project(
+        name=name,
+        root=values.root,
+        logs=values.logs,
+        workspace_artifacts=values.workspace_artifacts,
+        python=values.python,
+        exporter=values.exporter,
+        exporter_args=values.exporter_args,
+    )
+
+    console.print(f"\n[green]Project '{name}' registered.[/green]")
+    console.print(f"Root:     {project['root']}")
