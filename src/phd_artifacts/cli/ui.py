@@ -1,5 +1,3 @@
-from typing import TypeVar
-
 import questionary
 from rich.console import Console
 
@@ -8,15 +6,13 @@ from phd_artifacts.cli.theme import (
     RICH_THEME,
 )
 
-T = TypeVar("T")
-
 console = Console(theme=RICH_THEME)
 
 
 def select(
     message: str,
     choices: list[questionary.Choice],
-) -> T | None:
+) -> object | None:
     return questionary.select(
         message,
         choices=choices,
@@ -27,7 +23,7 @@ def select(
 def checkbox(
     message: str,
     choices: list[questionary.Choice],
-) -> list[T] | None:
+) -> list[object] | None:
     return questionary.checkbox(
         message,
         choices=choices,
@@ -47,3 +43,14 @@ def confirm(
     ).ask()
 
     return bool(result)
+
+
+def text(
+    message: str,
+    default: str | None = None,
+) -> str | None:
+    return questionary.text(
+        message,
+        default=default or "",
+        **QUESTIONARY_DEFAULTS,
+    ).ask()

@@ -1,3 +1,6 @@
+from typing import cast
+
+import questionary
 import typer
 from rich.console import Console
 from rich.table import Table
@@ -10,7 +13,8 @@ from phd_artifacts.artifacts.exceptions import (
     RemoteArtifactNotFoundError,
 )
 from phd_artifacts.artifacts.models import RemoteArtifact
-from phd_artifacts.artifacts.queries import get_artifacts
+from phd_artifacts.artifacts.queries import get_artifacts, get_remote_artifacts
+from phd_artifacts.cli.ui import select
 
 
 def resolve_artifact_or_exit(
@@ -34,18 +38,34 @@ def resolve_artifact_or_exit(
             project=project,
         )
 
-        if matches:
-            console.print(f"[error]Artifact '{exc.name}' not found.[/error]\n")
-            console.print("[warning]Possible matches:[/warning]")
-
-            names = sorted({artifact.name for artifact in matches})
-
-            for candidate in names:
-                console.print(f"  {candidate}")
-        else:
+        if not matches:
             console.print(f"[error]Artifact '{exc.name}' not found.[/error]")
+            raise typer.Exit(1) from None
 
-        raise typer.Exit(1) from None
+        console.print(f"[error]Artifact '{exc.name}' not found.[/error]\n")
+
+        names = sorted({artifact.name for artifact in matches})
+
+        selected_name = select(
+            "Select a matching artifact:",
+            [
+                questionary.Choice(
+                    title=candidate,
+                    value=candidate,
+                )
+                for candidate in names
+            ],
+        )
+
+        if selected_name is None:
+            raise typer.Exit() from None
+
+        return resolve_artifact_or_exit(
+            console=console,
+            name=cast(str, selected_name),
+            version=version,
+            project=project,
+        )
 
     except ArtifactAmbiguousError as exc:
         console.print(f"[warning]Multiple versions found for '{exc.name}'.[/warning]")
@@ -67,17 +87,21 @@ def resolve_artifact_or_exit(
 
         console.print(table)
 
-        selection = typer.prompt(
-            "Select version",
-            type=int,
-            default=1,
+        selected = select(
+            "Select version:",
+            [
+                questionary.Choice(
+                    title=artifact.version,
+                    value=artifact,
+                )
+                for artifact in exc.artifacts
+            ],
         )
 
-        if selection < 1 or selection > len(exc.artifacts):
-            console.print("[error]Invalid selection.[/error]")
-            raise typer.Exit(1) from None
+        if selected is None:
+            raise typer.Exit() from None
 
-        return exc.artifacts[selection - 1]
+        return cast(Artifact, selected)
 
 
 def resolve_remote_artifact_or_exit(
@@ -96,8 +120,41 @@ def resolve_remote_artifact_or_exit(
         )
 
     except RemoteArtifactNotFoundError as exc:
-        console.print(f"[error]{exc}[/error]")
-        raise typer.Exit(1) from None
+        matches = get_remote_artifacts(
+            remote_name=remote_name,
+            name=name,
+            project=project,
+        )
+
+        if not matches:
+            console.print(f"[error]{exc}[/error]")
+            raise typer.Exit(1) from None
+
+        console.print(f"[error]{exc}[/error]\n")
+
+        names = sorted({artifact.name for artifact in matches})
+
+        selected_name = select(
+            "Select a matching artifact:",
+            [
+                questionary.Choice(
+                    title=candidate,
+                    value=candidate,
+                )
+                for candidate in names
+            ],
+        )
+
+        if selected_name is None:
+            raise typer.Exit() from None
+
+        return resolve_remote_artifact_or_exit(
+            console=console,
+            remote_name=remote_name,
+            name=cast(str, selected_name),
+            project=project,
+            version=version,
+        )
 
     except RemoteArtifactAmbiguousError as exc:
         artifacts = sorted(
@@ -114,14 +171,18 @@ def resolve_remote_artifact_or_exit(
         ):
             console.print(f"  {index}. {artifact.version}")
 
-        choice = typer.prompt(
-            "Select version",
-            type=int,
-            default=1,
+        selected = select(
+            "Select version:",
+            [
+                questionary.Choice(
+                    title=artifact.version,
+                    value=artifact,
+                )
+                for artifact in artifacts
+            ],
         )
 
-        if choice < 1 or choice > len(artifacts):
-            console.print("[error]Invalid selection.[/error]")
-            raise typer.Exit(1) from None
+        if selected is None:
+            raise typer.Exit() from None
 
-        return artifacts[choice - 1]
+        return cast(RemoteArtifact, selected)

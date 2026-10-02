@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import cast
 
 import questionary
 import typer
@@ -93,9 +94,9 @@ def _select_checkpoints_interactively(
     )
 
     if not selected:
-        raise typer.Exit()
+        raise typer.Exit() from None
 
-    return selected
+    return cast(list[Path], selected)
 
 
 def promote(
