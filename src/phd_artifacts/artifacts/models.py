@@ -22,3 +22,9 @@ class RemoteArtifact:
     name: str
     version: str
     metadata: dict
+
+
+@dataclass(frozen=True)
+class CheckpointSelection:
+    role: str
+    path: Path

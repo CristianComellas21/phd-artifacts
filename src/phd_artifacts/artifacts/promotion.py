@@ -6,6 +6,7 @@ from pathlib import Path
 import tomli_w
 
 from phd_artifacts.artifacts.export import export_portable_weights
+from phd_artifacts.artifacts.models import CheckpointSelection
 from phd_artifacts.artifacts.verification import compute_sha256
 from phd_artifacts.core.config import load_config
 from phd_artifacts.projects.service import get_project
@@ -26,13 +27,13 @@ def get_artifact_version(run: Run) -> str:
     return f"{timestamp:%Y%m%d_%H%M%S}_{run.id}"
 
 
-def promote_checkpoint(
+def promote_checkpoints(
     run: Run,
-    checkpoint: Path,
+    checkpoints: list[CheckpointSelection],
     name: str,
     no_export: bool = False,
 ) -> Path:
-    """Promote a run checkpoint into the persistent artifact store."""
+    """Promote run checkpoints into the persistent artifact store."""
 
     project_name = run.project
     project_config = get_project(project_name)
@@ -48,12 +49,51 @@ def promote_checkpoint(
     destination.mkdir(parents=True)
 
     try:
-        checkpoint_destination = destination / "training.ckpt"
+        checkpoints_dir = destination / "checkpoints"
+        checkpoints_dir.mkdir()
 
-        shutil.copy2(
-            checkpoint,
-            checkpoint_destination,
-        )
+        checkpoint_metadata: dict[str, dict] = {}
+
+        for selection in checkpoints:
+            role = selection.role
+            source_checkpoint = selection.path
+
+            checkpoint_destination = checkpoints_dir / f"{role}.ckpt"
+
+            shutil.copy2(
+                source_checkpoint,
+                checkpoint_destination,
+            )
+
+            portable_files: list[dict] = []
+
+            if not no_export:
+                export_result = export_portable_weights(
+                    checkpoint_path=checkpoint_destination,
+                    artifact_path=destination,
+                    project_config=project_config,
+                    output_subdir=f"portable/{role}",
+                )
+
+                if export_result is not None:
+                    for path in export_result.files:
+                        portable_files.append(
+                            {
+                                "path": path.relative_to(destination).as_posix(),
+                                "size_bytes": (path.stat().st_size),
+                                "sha256": compute_sha256(path),
+                            }
+                        )
+
+            checkpoint_metadata[role] = {
+                "path": checkpoint_destination.relative_to(destination).as_posix(),
+                "source": str(source_checkpoint),
+                "size_bytes": (checkpoint_destination.stat().st_size),
+                "sha256": compute_sha256(checkpoint_destination),
+            }
+
+            if portable_files:
+                checkpoint_metadata[role]["portable_files"] = portable_files
 
         hydra_dir = run.path / ".hydra"
 
@@ -70,17 +110,8 @@ def promote_checkpoint(
                     destination / filename,
                 )
 
-        export_result = None
-
-        if not no_export:
-            export_result = export_portable_weights(
-                checkpoint_path=checkpoint_destination,
-                artifact_path=destination,
-                project_config=project_config,
-            )
-
         metadata = {
-            "version": 1,
+            "version": 2,
             "name": name,
             "project": project_name,
             "type": "checkpoint",
@@ -91,36 +122,18 @@ def promote_checkpoint(
             "promoted_at": datetime.now(UTC).isoformat(),
             "source": {
                 "run": str(run.path),
-                "checkpoint": str(checkpoint),
             },
-            "artifact": {
-                "checkpoint": "training.ckpt",
-                "size_bytes": (checkpoint_destination.stat().st_size),
-                "sha256": compute_sha256(checkpoint_destination),
-            },
+            "checkpoints": checkpoint_metadata,
         }
 
         if run.created_at:
             metadata["run_created_at"] = run.created_at.isoformat()
 
-        if export_result is not None:
-            portable_files = []
-
-            for path in export_result.files:
-                portable_files.append(
-                    {
-                        "path": path.relative_to(destination).as_posix(),
-                        "size_bytes": path.stat().st_size,
-                        "sha256": compute_sha256(path),
-                    }
-                )
-
+        if not no_export and "exporter" in project_config:
             metadata["export"] = {
                 "status": "ok",
                 "exporter": project_config["exporter"],
             }
-
-            metadata["portable_files"] = portable_files
 
         with (destination / "metadata.toml").open("wb") as file:
             tomli_w.dump(

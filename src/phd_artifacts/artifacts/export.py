@@ -39,6 +39,7 @@ def export_portable_weights(
     checkpoint_path: Path,
     artifact_path: Path,
     project_config: ProjectConfig,
+    output_subdir: str = "portable",
 ) -> ExportResult | None:
     exporter = project_config.get("exporter")
 
@@ -52,7 +53,7 @@ def export_portable_weights(
     if not exporter_path.is_file():
         raise RuntimeError(f"Exporter not found: {exporter_path}")
 
-    output_dir = (artifact_path / "portable").resolve()
+    output_dir = (artifact_path / output_subdir).resolve()
 
     checkpoint_path = checkpoint_path.resolve()
 
