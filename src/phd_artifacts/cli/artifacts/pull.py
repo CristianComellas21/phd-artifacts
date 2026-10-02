@@ -1,12 +1,10 @@
 import typer
-from rich.console import Console
 
 from phd_artifacts.artifacts import pull_artifact
 from phd_artifacts.artifacts.exceptions import LocalArtifactConflictError
 from phd_artifacts.artifacts.transfer import PullAction
 from phd_artifacts.cli.artifacts.common import resolve_remote_artifact_or_exit
-
-console = Console()
+from phd_artifacts.cli.ui import console
 
 
 def pull(

@@ -2,18 +2,16 @@ from datetime import timedelta
 from typing import cast
 
 import typer
-from rich.console import Console
 from rich.table import Table
 
 from phd_artifacts.artifacts import get_artifacts
 from phd_artifacts.artifacts.models import Artifact, RemoteArtifact
 from phd_artifacts.artifacts.queries import get_remote_artifacts
+from phd_artifacts.cli.ui import console
 from phd_artifacts.core.config_filtering import ConfigFilter, parse_config_filters
 from phd_artifacts.core.filtering import parse_duration
 from phd_artifacts.remotes.backends.exceptions import UnsupportedBackendError
 from phd_artifacts.remotes.exceptions import RemoteError
-
-console = Console()
 
 
 def _get_artifacts_for_list(

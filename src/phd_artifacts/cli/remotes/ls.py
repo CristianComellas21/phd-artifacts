@@ -1,15 +1,13 @@
 import typer
-from rich.console import Console
 from rich.table import Table
 
+from phd_artifacts.cli.ui import console
 from phd_artifacts.core.display import format_size
 from phd_artifacts.remotes import list_remote
 from phd_artifacts.remotes.backends.exceptions import (
     UnsupportedBackendError,
 )
 from phd_artifacts.remotes.exceptions import RemoteError
-
-console = Console()
 
 
 def ls(

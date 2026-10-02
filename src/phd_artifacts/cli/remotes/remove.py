@@ -1,10 +1,8 @@
 import typer
-from rich.console import Console
 
+from phd_artifacts.cli.ui import console
 from phd_artifacts.remotes import remove_remote
 from phd_artifacts.remotes.exceptions import RemoteNotFoundError
-
-console = Console()
 
 
 def remove(

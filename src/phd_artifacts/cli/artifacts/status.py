@@ -1,5 +1,4 @@
 import typer
-from rich.console import Console
 
 from phd_artifacts.artifacts.transfer import (
     get_artifact_remote_status,
@@ -7,10 +6,9 @@ from phd_artifacts.artifacts.transfer import (
 from phd_artifacts.cli.artifacts.common import (
     resolve_artifact_or_exit,
 )
+from phd_artifacts.cli.ui import console
 from phd_artifacts.remotes.exceptions import RemoteError
 from phd_artifacts.remotes.status import RemoteStatus
-
-console = Console()
 
 
 def status(

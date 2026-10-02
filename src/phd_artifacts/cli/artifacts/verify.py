@@ -1,11 +1,9 @@
 import typer
-from rich.console import Console
 from rich.table import Table
 
 from phd_artifacts.artifacts import verify_artifact
 from phd_artifacts.cli.artifacts.common import resolve_artifact_or_exit
-
-console = Console()
+from phd_artifacts.cli.ui import console
 
 
 def verify(

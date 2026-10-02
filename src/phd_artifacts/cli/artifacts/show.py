@@ -1,11 +1,9 @@
 import typer
-from rich.console import Console
 from rich.table import Table
 
 from phd_artifacts.cli.artifacts.common import resolve_artifact_or_exit
+from phd_artifacts.cli.ui import console
 from phd_artifacts.core.display import print_yaml_file
-
-console = Console()
 
 
 def show_artifact(

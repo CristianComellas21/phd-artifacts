@@ -2,15 +2,13 @@ from pathlib import Path
 
 import questionary
 import typer
-from rich.console import Console
 
 from phd_artifacts.artifacts import promote_checkpoints
 from phd_artifacts.artifacts.checkpoints import infer_checkpoint_role
 from phd_artifacts.artifacts.models import CheckpointSelection
 from phd_artifacts.cli.runs.common import resolve_run_or_exit
+from phd_artifacts.cli.ui import checkbox, console
 from phd_artifacts.runs import get_run_checkpoints
-
-console = Console()
 
 
 def _build_selections(
@@ -89,10 +87,10 @@ def _select_checkpoints_interactively(
             )
         )
 
-    selected = questionary.checkbox(
-        "Select checkpoints:",
+    selected = checkbox(
+        "Select checkpoints to promote:",
         choices=choices,
-    ).ask()
+    )
 
     if not selected:
         raise typer.Exit()

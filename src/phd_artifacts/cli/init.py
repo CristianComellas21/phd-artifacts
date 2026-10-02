@@ -1,17 +1,15 @@
 from pathlib import Path
 
 import typer
-from rich.console import Console
 
 from phd_artifacts.cli.projects.common import prompt_project_config
+from phd_artifacts.cli.ui import console
 from phd_artifacts.core.config import (
     config_exists,
     create_config,
     get_config_path,
 )
 from phd_artifacts.projects.service import add_project
-
-console = Console()
 
 
 def init(

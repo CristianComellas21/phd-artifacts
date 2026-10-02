@@ -1,9 +1,7 @@
 import typer
-from rich.console import Console
 
+from phd_artifacts.cli.ui import console
 from phd_artifacts.remotes import add_remote
-
-console = Console()
 
 
 def add(

@@ -1,9 +1,7 @@
-from rich.console import Console
 from rich.table import Table
 
+from phd_artifacts.cli.ui import console
 from phd_artifacts.projects.service import list_projects
-
-console = Console()
 
 
 def list_projects_command():

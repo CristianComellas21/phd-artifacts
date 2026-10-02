@@ -1,14 +1,12 @@
 import typer
-from rich.console import Console
 from rich.table import Table
 
+from phd_artifacts.cli.ui import console
 from phd_artifacts.core.config_filtering import parse_config_filters
 from phd_artifacts.core.filtering import parse_duration
 from phd_artifacts.projects.exceptions import ProjectError
 from phd_artifacts.projects.service import resolve_project
 from phd_artifacts.runs import get_runs
-
-console = Console()
 
 
 def list_runs(

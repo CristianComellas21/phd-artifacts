@@ -1,12 +1,10 @@
 import typer
-from rich.console import Console
 from rich.table import Table
 
 from phd_artifacts.cli.runs.common import resolve_run_or_exit
+from phd_artifacts.cli.ui import console
 from phd_artifacts.core.display import print_yaml_file
 from phd_artifacts.runs import get_run_checkpoints
-
-console = Console()
 
 
 def show_run(

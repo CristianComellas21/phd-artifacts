@@ -1,13 +1,11 @@
 import typer
-from rich.console import Console
 
+from phd_artifacts.cli.ui import console
 from phd_artifacts.remotes import tree_remote
 from phd_artifacts.remotes.backends.exceptions import (
     UnsupportedBackendError,
 )
 from phd_artifacts.remotes.exceptions import RemoteError
-
-console = Console()
 
 
 def tree(

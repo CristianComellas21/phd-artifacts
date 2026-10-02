@@ -1,10 +1,8 @@
 import typer
-from rich.console import Console
 
+from phd_artifacts.cli.ui import console
 from phd_artifacts.projects.exceptions import ProjectNotFoundError
 from phd_artifacts.projects.service import remove_project
-
-console = Console()
 
 
 def remove(
