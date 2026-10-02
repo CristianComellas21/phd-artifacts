@@ -42,7 +42,7 @@ def show_run(
         project=project,
     )
 
-    console.print(f"[bold]Run {run.id}[/bold]\n")
+    console.print(f"[accent]Run {run.id}[/accent]\n")
 
     console.print(f"Project:    {run.project}")
     console.print(f"Experiment: {run.experiment or '-'}")
@@ -55,7 +55,7 @@ def show_run(
 
     hydra_dir = run.path / ".hydra"
 
-    console.print("\n[bold]Hydra[/bold]")
+    console.print("\n[accent]Hydra[/accent]")
 
     for filename in (
         "config.yaml",
@@ -69,7 +69,7 @@ def show_run(
 
     checkpoints = get_run_checkpoints(run)
 
-    console.print("\n[bold]Checkpoints[/bold]")
+    console.print("\n[accent]Checkpoints[/accent]")
 
     if not checkpoints:
         console.print("  None")

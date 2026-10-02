@@ -73,11 +73,11 @@ def configure(
     )
 
     if python is not None and clear_python:
-        console.print("[red]Cannot use --python and --clear-python together.[/red]")
+        console.print("[error]Cannot use --python and --clear-python together.[/error]")
         raise typer.Exit(1)
 
     if exporter is not None and clear_exporter:
-        console.print("[red]Cannot use --exporter and --clear-exporter together.[/red]")
+        console.print("[error]Cannot use --exporter and --clear-exporter together.[/error]")
         raise typer.Exit(1)
 
     try:
@@ -116,10 +116,10 @@ def configure(
         FileNotFoundError,
         ValueError,
     ) as exc:
-        console.print(f"[red]{exc}[/red]")
+        console.print(f"[error]{exc}[/error]")
         raise typer.Exit(1) from None
 
-    console.print(f"[green]Project '{name}' updated.[/green]\n")
+    console.print(f"[success]Project '{name}' updated.[/success]\n")
 
     console.print(f"Root:      {project['root']}")
     console.print(f"Logs:      {project['logs']}")

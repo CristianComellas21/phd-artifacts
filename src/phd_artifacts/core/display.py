@@ -11,16 +11,16 @@ def print_yaml_file(
 ) -> None:
     """Print a YAML file with syntax highlighting."""
 
-    console.print(f"\n[bold]{title}[/bold]")
+    console.print(f"\n[accent]{title}[/accent]")
 
     if not path.exists():
-        console.print("[yellow]Not available.[/yellow]")
+        console.print("[warning]Not available.[/warning]")
         return
 
     try:
         content = path.read_text(encoding="utf-8")
     except OSError as exc:
-        console.print(f"[red]Could not read {path}: {exc}[/red]")
+        console.print(f"[error]Could not read {path}: {exc}[/error]")
         return
 
     syntax = Syntax(

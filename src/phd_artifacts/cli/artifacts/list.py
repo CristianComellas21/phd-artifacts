@@ -176,7 +176,7 @@ def list_artifacts(
         config_any_filters = parse_config_filters(config_any or [])
 
     except ValueError as exc:
-        console.print(f"[red]{exc}[/red]")
+        console.print(f"[error]{exc}[/error]")
         raise typer.Exit(1) from None
 
     try:
@@ -197,7 +197,7 @@ def list_artifacts(
         UnsupportedBackendError,
         RuntimeError,
     ) as exc:
-        console.print(f"[red]{exc}[/red]")
+        console.print(f"[error]{exc}[/error]")
         raise typer.Exit(1) from None
 
     if not artifacts:

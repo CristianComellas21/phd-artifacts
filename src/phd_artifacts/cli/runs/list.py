@@ -79,14 +79,14 @@ def list_runs(
     try:
         since_delta = parse_duration(since) if since else None
     except ValueError as exc:
-        console.print(f"[red]{exc}[/red]")
+        console.print(f"[error]{exc}[/error]")
         raise typer.Exit(1) from None
 
     try:
         config_filters = parse_config_filters(config or [])
         config_any_filters = parse_config_filters(config_any or [])
     except ValueError as exc:
-        console.print(f"[red]{exc}[/red]")
+        console.print(f"[error]{exc}[/error]")
         raise typer.Exit(1) from None
 
     try:
@@ -105,11 +105,13 @@ def list_runs(
 
     except ProjectError as exc:
         message = exc.args[0] if exc.args else str(exc)
-        console.print(f"[red]{message}[/red]")
+        console.print(f"[error]{message}[/error]")
         raise typer.Exit(1) from None
 
     if not runs:
-        console.print(f"No matching Hydra runs found for project '[bold]{project_name}[/bold]'.")
+        console.print(
+            f"No matching Hydra runs found for project '[accent]{project_name}[/accent]'."
+        )
         return
 
     table = Table(
@@ -131,8 +133,8 @@ def list_runs(
             "yes" if run.has_checkpoints else "",
         )
 
-    console.print(f"[bold]{project_name}[/bold]")
+    console.print(f"[accent]{project_name}[/accent]")
     console.print(table)
 
     if not show_all and len(runs) > limit:
-        console.print(f"[dim]Showing {limit} of {len(runs)} matching runs.[/dim]")
+        console.print(f"[muted]Showing {limit} of {len(runs)} matching runs.[/muted]")

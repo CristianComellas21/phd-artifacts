@@ -60,19 +60,19 @@ def push(
         RuntimeError,
         FileNotFoundError,
     ) as exc:
-        console.print(f"[red]{exc}[/red]")
+        console.print(f"[error]{exc}[/error]")
         raise typer.Exit(1) from None
 
     match result.action:
         case PushAction.UPLOADED:
-            console.print(f"\n[green]Artifact '{artifact.name}' uploaded successfully.[/green]")
+            console.print(f"\n[success]Artifact '{artifact.name}' uploaded successfully.[/success]")
 
         case PushAction.ALREADY_UP_TO_DATE:
-            console.print(f"\n[green]Artifact '{artifact.name}' is already up to date.[/green]")
+            console.print(f"\n[success]Artifact '{artifact.name}' is already up to date.[/success]")
 
         case PushAction.OVERWRITTEN:
             console.print(
-                f"\n[yellow]Artifact '{artifact.name}' overwritten successfully.[/yellow]"
+                f"\n[warning]Artifact '{artifact.name}' overwritten successfully.[/warning]"
             )
 
     console.print(f"Remote:      {remote}")

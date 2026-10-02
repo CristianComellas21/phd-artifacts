@@ -16,7 +16,7 @@ def remove(
     try:
         remove_remote(name)
     except RemoteNotFoundError as exc:
-        console.print(f"[red]{exc}[/red]")
+        console.print(f"[error]{exc}[/error]")
         raise typer.Exit(1) from None
 
-    console.print(f"[green]Removed remote '{name}'.[/green]")
+    console.print(f"[success]Removed remote '{name}'.[/success]")

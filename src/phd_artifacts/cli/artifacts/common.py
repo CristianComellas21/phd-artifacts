@@ -35,20 +35,20 @@ def resolve_artifact_or_exit(
         )
 
         if matches:
-            console.print(f"[red]Artifact '{exc.name}' not found.[/red]\n")
-            console.print("[yellow]Possible matches:[/yellow]")
+            console.print(f"[error]Artifact '{exc.name}' not found.[/error]\n")
+            console.print("[warning]Possible matches:[/warning]")
 
             names = sorted({artifact.name for artifact in matches})
 
             for candidate in names:
                 console.print(f"  {candidate}")
         else:
-            console.print(f"[red]Artifact '{exc.name}' not found.[/red]")
+            console.print(f"[error]Artifact '{exc.name}' not found.[/error]")
 
         raise typer.Exit(1) from None
 
     except ArtifactAmbiguousError as exc:
-        console.print(f"[yellow]Multiple versions found for '{exc.name}'.[/yellow]")
+        console.print(f"[warning]Multiple versions found for '{exc.name}'.[/warning]")
 
         table = Table(
             "#",
@@ -74,7 +74,7 @@ def resolve_artifact_or_exit(
         )
 
         if selection < 1 or selection > len(exc.artifacts):
-            console.print("[red]Invalid selection.[/red]")
+            console.print("[error]Invalid selection.[/error]")
             raise typer.Exit(1) from None
 
         return exc.artifacts[selection - 1]
@@ -96,7 +96,7 @@ def resolve_remote_artifact_or_exit(
         )
 
     except RemoteArtifactNotFoundError as exc:
-        console.print(f"[red]{exc}[/red]")
+        console.print(f"[error]{exc}[/error]")
         raise typer.Exit(1) from None
 
     except RemoteArtifactAmbiguousError as exc:
@@ -106,7 +106,7 @@ def resolve_remote_artifact_or_exit(
             reverse=True,
         )
 
-        console.print(f"[bold]Multiple versions of '{name}' found on '{remote_name}':[/bold]")
+        console.print(f"[accent]Multiple versions of '{name}' found on '{remote_name}':[/accent]")
 
         for index, artifact in enumerate(
             artifacts,
@@ -121,7 +121,7 @@ def resolve_remote_artifact_or_exit(
         )
 
         if choice < 1 or choice > len(artifacts):
-            console.print("[red]Invalid selection.[/red]")
+            console.print("[error]Invalid selection.[/error]")
             raise typer.Exit(1) from None
 
         return artifacts[choice - 1]

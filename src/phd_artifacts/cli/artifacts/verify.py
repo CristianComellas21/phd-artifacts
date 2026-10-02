@@ -36,10 +36,10 @@ def verify(
     try:
         result = verify_artifact(artifact)
     except ValueError as exc:
-        console.print(f"[red]{exc}[/red]")
+        console.print(f"[error]{exc}[/error]")
         raise typer.Exit(1) from None
 
-    console.print(f"[bold]{artifact.name}[/bold]")
+    console.print(f"[accent]{artifact.name}[/accent]")
     console.print(f"Version: {artifact.version}")
 
     table = Table(
@@ -52,16 +52,16 @@ def verify(
     for file_result in result.files:
         table.add_row(
             file_result.path,
-            "[green]yes[/green]" if file_result.exists else "[red]no[/red]",
-            "[green]OK[/green]" if file_result.size_ok else "[red]FAILED[/red]",
-            "[green]OK[/green]" if file_result.sha256_ok else "[red]FAILED[/red]",
+            "[success]yes[/success]" if file_result.exists else "[error]no[/error]",
+            "[success]OK[/success]" if file_result.size_ok else "[error]FAILED[/error]",
+            "[success]OK[/success]" if file_result.sha256_ok else "[error]FAILED[/error]",
         )
 
     console.print(table)
 
     if result.ok:
-        console.print("[green]Status: OK[/green]")
+        console.print("[success]Status: OK[/success]")
         return
 
-    console.print("[red]Status: FAILED[/red]")
+    console.print("[error]Status: FAILED[/error]")
     raise typer.Exit(1)

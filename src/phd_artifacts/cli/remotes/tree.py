@@ -44,7 +44,7 @@ def tree(
         RuntimeError,
         ValueError,
     ) as exc:
-        console.print(f"[red]{exc}[/red]")
+        console.print(f"[error]{exc}[/error]")
         raise typer.Exit(1) from None
 
     if not entries:

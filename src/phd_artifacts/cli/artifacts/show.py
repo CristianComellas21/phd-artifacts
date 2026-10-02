@@ -50,7 +50,7 @@ def show_artifact(
 
     metadata = artifact.metadata
 
-    console.print(f"[bold]{artifact.name}[/bold]\n")
+    console.print(f"[accent]{artifact.name}[/accent]\n")
 
     console.print(f"Project:    {artifact.project}")
     console.print(f"Type:       {artifact.artifact_type}")
@@ -65,7 +65,7 @@ def show_artifact(
     checkpoints = metadata.get("checkpoints", {})
 
     if checkpoints:
-        console.print("\n[bold]Checkpoints[/bold]")
+        console.print("\n[accent]Checkpoints[/accent]")
 
         table = Table(
             "Role",

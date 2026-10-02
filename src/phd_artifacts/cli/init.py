@@ -47,7 +47,7 @@ def init(
 
     create_config(artifact_root)
 
-    console.print("\n[green]Configuration created successfully.[/green]")
+    console.print("\n[success]Configuration created successfully.[/success]")
     console.print(f"Config:    {config_path}")
     console.print(f"Artifacts: {artifact_root}")
 
@@ -71,5 +71,5 @@ def init(
         exporter_args=values.exporter_args,
     )
 
-    console.print(f"\n[green]Project '{name}' registered.[/green]")
+    console.print(f"\n[success]Project '{name}' registered.[/success]")
     console.print(f"Root:     {project['root']}")

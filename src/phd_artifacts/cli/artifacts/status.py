@@ -50,20 +50,20 @@ def status(
             remote_name=remote,
         )
     except (RemoteError, RuntimeError) as exc:
-        console.print(f"[red]{exc}[/red]")
+        console.print(f"[error]{exc}[/error]")
         raise typer.Exit(1) from None
 
-    console.print(f"[bold]{artifact.name}[/bold]\n")
+    console.print(f"[accent]{artifact.name}[/accent]\n")
     console.print(f"Project:  {artifact.project}")
     console.print(f"Version:  {artifact.version}")
     console.print(f"Remote:   {remote}")
 
     match comparison.status:
         case RemoteStatus.UP_TO_DATE:
-            console.print("Status:   [green]up to date[/green]")
+            console.print("Status:   [success]up to date[/success]")
 
         case RemoteStatus.MISSING:
-            console.print("Status:   [yellow]missing[/yellow]")
+            console.print("Status:   [warning]missing[/warning]")
 
         case RemoteStatus.DIFFERENT:
-            console.print("Status:   [red]different[/red]")
+            console.print("Status:   [error]different[/error]")

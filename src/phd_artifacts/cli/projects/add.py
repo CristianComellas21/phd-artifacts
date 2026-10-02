@@ -71,10 +71,10 @@ def add(
         ValueError,
         FileNotFoundError,
     ) as exc:
-        console.print(f"[red]{exc}[/red]")
+        console.print(f"[error]{exc}[/error]")
         raise typer.Exit(1) from None
 
-    console.print(f"[green]Project '{name}' registered.[/green]")
+    console.print(f"[success]Project '{name}' registered.[/success]")
 
     console.print(f"Root:      {project['root']}")
     console.print(f"Logs:      {project['logs']}")

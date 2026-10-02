@@ -12,10 +12,10 @@ def current():
         name, project = resolve_project()
 
     except ProjectNotResolvedError as exc:
-        console.print(f"[red]{exc}[/red]")
+        console.print(f"[error]{exc}[/error]")
         raise typer.Exit(1) from None
 
-    console.print(f"[bold]{name}[/bold]")
+    console.print(f"[accent]{name}[/accent]")
     console.print(f"Root:      {project['root']}")
     console.print(f"Logs:      {project['logs']}")
     console.print(f"Artifacts: {project['workspace_artifacts']}")

@@ -23,7 +23,7 @@ def _build_selections(
             role = typer.prompt(f"Role for {path.name}").strip()
 
         if not role:
-            console.print(f"[red]Role cannot be empty for {path.name}.[/red]")
+            console.print(f"[error]Role cannot be empty for {path.name}.[/error]")
             raise typer.Exit(1)
 
         selections.append(
@@ -36,7 +36,7 @@ def _build_selections(
     roles = [selection.role for selection in selections]
 
     if len(roles) != len(set(roles)):
-        console.print("[red]Checkpoint roles must be unique.[/red]")
+        console.print("[error]Checkpoint roles must be unique.[/error]")
         raise typer.Exit(1)
 
     return selections
@@ -57,11 +57,11 @@ def _resolve_checkpoint_paths(
         ]
 
         if not matches:
-            console.print(f"[red]Checkpoint '{checkpoint}' not found.[/red]")
+            console.print(f"[error]Checkpoint '{checkpoint}' not found.[/error]")
             raise typer.Exit(1)
 
         if len(matches) > 1:
-            console.print(f"[red]Checkpoint '{checkpoint}' is ambiguous.[/red]")
+            console.print(f"[error]Checkpoint '{checkpoint}' is ambiguous.[/error]")
             raise typer.Exit(1)
 
         selected.append(matches[0])
@@ -138,7 +138,7 @@ def promote(
     checkpoints = get_run_checkpoints(run)
 
     if not checkpoints:
-        console.print("[red]This run contains no checkpoints.[/red]")
+        console.print("[error]This run contains no checkpoints.[/error]")
         raise typer.Exit(1)
 
     if checkpoint:
@@ -151,7 +151,7 @@ def promote(
         selected_paths = _select_checkpoints_interactively(checkpoints)
 
     if len(selected_paths) != len(set(selected_paths)):
-        console.print("[red]The same checkpoint cannot be selected more than once.[/red]")
+        console.print("[error]The same checkpoint cannot be selected more than once.[/error]")
         raise typer.Exit(1)
 
     selections = _build_selections(selected_paths)
@@ -165,10 +165,10 @@ def promote(
         )
 
     except FileExistsError as exc:
-        console.print(f"[red]{exc}[/red]")
+        console.print(f"[error]{exc}[/error]")
         raise typer.Exit(1) from None
 
-    console.print("\n[green]Artifact promoted successfully.[/green]")
+    console.print("\n[success]Artifact promoted successfully.[/success]")
     console.print(f"Run:      {run.id}")
     console.print(f"Artifact: {destination}")
     console.print("Checkpoints:")

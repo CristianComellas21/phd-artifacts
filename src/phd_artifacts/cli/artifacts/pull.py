@@ -53,20 +53,20 @@ def pull(
         )
 
     except LocalArtifactConflictError as exc:
-        console.print(f"[red]{exc}[/red]")
+        console.print(f"[error]{exc}[/error]")
         raise typer.Exit(1) from None
     except RuntimeError as exc:
-        console.print(f"[red]{exc}[/red]")
+        console.print(f"[error]{exc}[/error]")
         raise typer.Exit(1) from None
 
     if result.action is PullAction.ALREADY_UP_TO_DATE:
-        console.print("[green]Artifact is already up to date.[/green]")
+        console.print("[success]Artifact is already up to date.[/success]")
 
     elif result.action is PullAction.OVERWRITTEN:
-        console.print("[yellow]Artifact overwritten from remote.[/yellow]")
+        console.print("[warning]Artifact overwritten from remote.[/warning]")
 
     else:
-        console.print("[green]Artifact downloaded successfully.[/green]")
+        console.print("[success]Artifact downloaded successfully.[/success]")
 
     console.print(f"Remote:   {artifact.remote}")
     console.print(f"Artifact: {artifact.name}")

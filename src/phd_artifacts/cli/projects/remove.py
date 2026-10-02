@@ -16,7 +16,7 @@ def remove(
     try:
         remove_project(name)
     except ProjectNotFoundError as exc:
-        console.print(f"[red]{exc}[/red]")
+        console.print(f"[error]{exc}[/error]")
         raise typer.Exit(1) from None
 
-    console.print(f"[green]Project '{name}' removed.[/green]")
+    console.print(f"[success]Project '{name}' removed.[/success]")

@@ -22,11 +22,11 @@ def resolve_run_or_exit(
         )
 
     except RunNotFoundError as exc:
-        console.print(f"[red]Run '{exc.run_id}' not found.[/red]")
+        console.print(f"[error]Run '{exc.run_id}' not found.[/error]")
         raise typer.Exit(1) from None
 
     except RunAmbiguousError as exc:
-        console.print(f"[red]Run ID '{exc.run_id}' is ambiguous.[/red]")
+        console.print(f"[error]Run ID '{exc.run_id}' is ambiguous.[/error]")
 
         for run in exc.runs:
             console.print(f"  {run.project}: {run.relative_path}")

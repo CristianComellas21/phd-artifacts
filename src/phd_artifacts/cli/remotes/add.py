@@ -29,9 +29,9 @@ def add(
             target=target,
         )
     except ValueError as exc:
-        console.print(f"[red]{exc}[/red]")
+        console.print(f"[error]{exc}[/error]")
         raise typer.Exit(1) from None
 
-    console.print(f"[green]Added remote '{remote.name}'.[/green]")
+    console.print(f"[success]Added remote '{remote.name}'.[/success]")
     console.print(f"Type:   {remote.type}")
     console.print(f"Target: {remote.target}")

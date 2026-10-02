@@ -16,9 +16,9 @@ def check(
     try:
         remote = check_remote(name)
     except (RemoteNotFoundError, ValueError, RuntimeError) as exc:
-        console.print(f"[red]{exc}[/red]")
+        console.print(f"[error]{exc}[/error]")
         raise typer.Exit(1) from None
 
-    console.print(f"[green]Remote '{remote.name}' is available.[/green]")
+    console.print(f"[success]Remote '{remote.name}' is available.[/success]")
     console.print(f"Type:   {remote.type}")
     console.print(f"Target: {remote.target}")
