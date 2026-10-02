@@ -33,6 +33,11 @@ def promote(
         "-p",
         help="Project name. Defaults to the current project.",
     ),
+    no_export: bool = typer.Option(
+        False,
+        "--no-export",
+        help=("Skip automatic portable weight export."),
+    ),
 ):
     """Promote a run checkpoint to the persistent artifact store."""
 
@@ -90,6 +95,7 @@ def promote(
             run=run,
             checkpoint=selected,
             name=name,
+            no_export=no_export,
         )
     except FileExistsError as exc:
         console.print(f"[red]{exc}[/red]")
