@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from typing import cast
 
@@ -50,9 +51,22 @@ def add_project(
     }
 
     if python is not None:
-        project["python"] = str(python.expanduser().resolve())
+        python = python.expanduser().resolve()
+
+        if not python.is_file():
+            raise FileNotFoundError(f"Python executable not found: {python}")
+
+        if not os.access(python, os.X_OK):
+            raise ValueError(f"Python is not executable: {python}")
+
+        project["python"] = str(python)
 
     if exporter is not None:
+        exporter_path = root / exporter
+
+        if not exporter_path.is_file():
+            raise FileNotFoundError(f"Exporter not found: {exporter_path}")
+
         project["exporter"] = exporter
 
     if exporter_args:
