@@ -1,10 +1,12 @@
+import shutil
 from dataclasses import dataclass
 from enum import StrEnum
-from pathlib import PurePosixPath
+from pathlib import Path, PurePosixPath
 
 from phd_artifacts.artifacts.exceptions import RemoteArtifactConflictError
-from phd_artifacts.artifacts.models import Artifact
+from phd_artifacts.artifacts.models import Artifact, RemoteArtifact
 from phd_artifacts.artifacts.verification import verify_artifact
+from phd_artifacts.core.config import load_config
 from phd_artifacts.remotes import get_remote
 from phd_artifacts.remotes.backends.registry import get_backend
 from phd_artifacts.remotes.status import RemoteComparison, RemoteStatus
@@ -20,6 +22,18 @@ class PushAction(StrEnum):
 class PushResult:
     destination: str
     action: PushAction
+
+
+class PullAction(StrEnum):
+    DOWNLOADED = "downloaded"
+    ALREADY_UP_TO_DATE = "already_up_to_date"
+    OVERWRITTEN = "overwritten"
+
+
+@dataclass
+class PullResult:
+    destination: Path
+    action: PullAction
 
 
 def push_artifact(
@@ -83,6 +97,61 @@ def push_artifact(
     return PushResult(
         destination=destination,
         action=PushAction.UPLOADED,
+    )
+
+
+def pull_artifact(
+    artifact: RemoteArtifact,
+    force: bool = False,
+) -> PullResult:
+    """Pull a remote artifact into the local artifact store."""
+
+    config = load_config()
+
+    artifact_root = Path(config["artifact_root"])
+
+    destination = artifact_root / Path(*artifact.path.parts)
+
+    remote = get_remote(artifact.remote)
+    backend = get_backend(remote.type)
+
+    if destination.exists():
+        comparison = backend.compare(
+            remote=remote,
+            source=destination,
+            remote_path=artifact.path,
+        )
+
+        if comparison.status is RemoteStatus.UP_TO_DATE:
+            return PullResult(
+                destination=destination,
+                action=PullAction.ALREADY_UP_TO_DATE,
+            )
+
+        if not force:
+            raise RemoteArtifactConflictError(
+                name=artifact.name,
+                remote_name=artifact.remote,
+            )
+
+        shutil.rmtree(
+            destination,
+        )
+
+        action = PullAction.OVERWRITTEN
+
+    else:
+        action = PullAction.DOWNLOADED
+
+    backend.pull(
+        remote=remote,
+        remote_path=artifact.path,
+        destination=destination,
+    )
+
+    return PullResult(
+        destination=destination,
+        action=action,
     )
 
 

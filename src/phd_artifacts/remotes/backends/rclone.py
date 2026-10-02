@@ -61,6 +61,38 @@ class RcloneBackend:
 
         return destination
 
+    def pull(
+        self,
+        remote: Remote,
+        remote_path: PurePosixPath,
+        destination: Path,
+    ) -> None:
+        target = self.get_target(
+            remote=remote,
+            remote_path=remote_path,
+        )
+
+        destination.parent.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
+
+        result = subprocess.run(
+            [
+                "rclone",
+                "copy",
+                target,
+                str(destination),
+            ],
+            capture_output=True,
+            text=True,
+        )
+
+        if result.returncode != 0:
+            message = result.stderr.strip() or result.stdout.strip()
+
+            raise RuntimeError(f"Remote pull failed: {message}")
+
     def compare(
         self,
         remote: Remote,

@@ -46,6 +46,13 @@ class RemoteBackend(Protocol):
         remote_path: PurePosixPath,
     ) -> str: ...
 
+    def pull(
+        self,
+        remote: Remote,
+        remote_path: PurePosixPath,
+        destination: Path,
+    ) -> None: ...
+
     def compare(
         self,
         remote: Remote,

@@ -1,8 +1,7 @@
 import typer
 from rich.console import Console
 
-from phd_artifacts.artifacts.exceptions import RemoteArtifactConflictError
-from phd_artifacts.artifacts.transfer import PushAction, push_artifact
+from phd_artifacts.artifacts import PushAction, RemoteArtifactConflictError, push_artifact
 from phd_artifacts.cli.artifacts.common import resolve_artifact_or_exit
 from phd_artifacts.remotes.backends.exceptions import UnsupportedBackendError
 from phd_artifacts.remotes.exceptions import RemoteNotFoundError
