@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import questionary
 import typer
 from rich.console import Console
 
@@ -76,32 +77,25 @@ def _select_checkpoints_interactively(
     if len(checkpoints) == 1:
         return checkpoints
 
-    console.print("[bold]Available checkpoints:[/bold]")
+    choices = []
 
-    for index, path in enumerate(
-        checkpoints,
-        start=1,
-    ):
+    for path in checkpoints:
         size_mb = path.stat().st_size / (1024**2)
 
-        console.print(f"  {index}. {path.name} ({size_mb:.1f} MB)")
+        choices.append(
+            questionary.Choice(
+                title=f"{path.name} ({size_mb:.1f} MB)",
+                value=path,
+            )
+        )
 
-    raw = typer.prompt("Select checkpoints [comma-separated]")
+    selected = questionary.checkbox(
+        "Select checkpoints:",
+        choices=choices,
+    ).ask()
 
-    try:
-        choices = [int(value.strip()) for value in raw.split(",")]
-    except ValueError:
-        console.print("[red]Invalid selection.[/red]")
-        raise typer.Exit(1) from None
-
-    selected: list[Path] = []
-
-    for choice in choices:
-        if choice < 1 or choice > len(checkpoints):
-            console.print(f"[red]Invalid checkpoint selection: {choice}[/red]")
-            raise typer.Exit(1)
-
-        selected.append(checkpoints[choice - 1])
+    if not selected:
+        raise typer.Exit()
 
     return selected
 
