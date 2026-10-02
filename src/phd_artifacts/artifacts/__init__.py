@@ -9,6 +9,7 @@ from phd_artifacts.artifacts.queries import (
     get_remote_artifact,
     get_remote_artifacts,
 )
+from phd_artifacts.artifacts.remove import remove_artifact
 from phd_artifacts.artifacts.transfer import (
     PullAction,
     PullResult,
@@ -38,4 +39,5 @@ __all__ = [
     "PullResult",
     "pull_artifact",
     "RemoteArtifactConflictError",
+    "remove_artifact",
 ]

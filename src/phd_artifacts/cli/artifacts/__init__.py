@@ -3,6 +3,7 @@ import typer
 from phd_artifacts.cli.artifacts.list import list_artifacts
 from phd_artifacts.cli.artifacts.pull import pull
 from phd_artifacts.cli.artifacts.push import push
+from phd_artifacts.cli.artifacts.remove import remove
 from phd_artifacts.cli.artifacts.show import show_artifact
 from phd_artifacts.cli.artifacts.status import status
 from phd_artifacts.cli.artifacts.verify import verify
@@ -17,3 +18,4 @@ app.command("verify")(verify)
 app.command("push")(push)
 app.command("pull")(pull)
 app.command("status")(status)
+app.command("remove")(remove)
