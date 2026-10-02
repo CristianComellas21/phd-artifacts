@@ -1,5 +1,6 @@
 import typer
 from rich.console import Console
+from rich.table import Table
 
 from phd_artifacts.cli.artifacts.common import resolve_artifact_or_exit
 from phd_artifacts.core.display import print_yaml_file
@@ -53,27 +54,48 @@ def show_artifact(
 
     console.print(f"[bold]{artifact.name}[/bold]\n")
 
-    console.print(f"Project:     {artifact.project}")
-    console.print(f"Type:        {artifact.artifact_type}")
-    console.print(f"Version:     {artifact.version}")
-    console.print(f"Experiment:  {metadata.get('experiment', '-')}")
-    console.print(f"Model:       {metadata.get('model', '-')}")
-    console.print(f"Run:         {metadata.get('run_id', '-')}")
-    console.print(f"Host:        {metadata.get('source_host', '-')}")
-    console.print(f"Promoted:    {metadata.get('promoted_at', '-')}")
-    console.print(f"Path:        {artifact.path}")
+    console.print(f"Project:    {artifact.project}")
+    console.print(f"Type:       {artifact.artifact_type}")
+    console.print(f"Version:    {artifact.version}")
+    console.print(f"Experiment: {metadata.get('experiment', '-')}")
+    console.print(f"Model:      {metadata.get('model', '-')}")
+    console.print(f"Run:        {metadata.get('run_id', '-')}")
+    console.print(f"Host:       {metadata.get('source_host', '-')}")
+    console.print(f"Promoted:   {metadata.get('promoted_at', '-')}")
+    console.print(f"Path:       {artifact.path}")
 
-    artifact_info = metadata.get("artifact", {})
+    checkpoints = metadata.get("checkpoints", {})
 
-    size_bytes = artifact_info.get("size_bytes")
+    if checkpoints:
+        console.print("\n[bold]Checkpoints[/bold]")
 
-    if size_bytes is not None:
-        console.print(f"Size:        {size_bytes / (1024**2):.1f} MB")
+        table = Table(
+            "Role",
+            "File",
+            "Size",
+            "Portable",
+        )
 
-    checksum = artifact_info.get("sha256")
+        for role, checkpoint in checkpoints.items():
+            size_bytes = checkpoint.get("size_bytes", 0)
+            portable_files = checkpoint.get(
+                "portable_files",
+                [],
+            )
 
-    if checksum:
-        console.print(f"SHA256:      {checksum}")
+            table.add_row(
+                role,
+                checkpoint.get("path", "-"),
+                f"{size_bytes / (1024**2):.1f} MB",
+                str(len(portable_files)),
+            )
+
+        console.print(table)
+
+    exporter = metadata.get("export", {}).get("exporter")
+
+    if exporter:
+        console.print(f"\nExporter: {exporter}")
 
     if show_config or show_full:
         print_yaml_file(
