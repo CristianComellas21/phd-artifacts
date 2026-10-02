@@ -2,11 +2,14 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from phd_artifacts.artifacts import Artifact, get_artifact
+from phd_artifacts.artifacts import Artifact, get_artifact, get_remote_artifact
 from phd_artifacts.artifacts.exceptions import (
     ArtifactAmbiguousError,
     ArtifactNotFoundError,
+    RemoteArtifactAmbiguousError,
+    RemoteArtifactNotFoundError,
 )
+from phd_artifacts.artifacts.models import RemoteArtifact
 from phd_artifacts.artifacts.queries import get_artifacts
 
 
@@ -75,3 +78,50 @@ def resolve_artifact_or_exit(
             raise typer.Exit(1) from None
 
         return exc.artifacts[selection - 1]
+
+
+def resolve_remote_artifact_or_exit(
+    console: Console,
+    remote_name: str,
+    name: str,
+    project: str | None = None,
+    version: str | None = None,
+) -> RemoteArtifact:
+    try:
+        return get_remote_artifact(
+            remote_name=remote_name,
+            name=name,
+            project=project,
+            version=version,
+        )
+
+    except RemoteArtifactNotFoundError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(1) from None
+
+    except RemoteArtifactAmbiguousError as exc:
+        artifacts = sorted(
+            exc.artifacts,
+            key=lambda artifact: artifact.version,
+            reverse=True,
+        )
+
+        console.print(f"[bold]Multiple versions of '{name}' found on '{remote_name}':[/bold]")
+
+        for index, artifact in enumerate(
+            artifacts,
+            start=1,
+        ):
+            console.print(f"  {index}. {artifact.version}")
+
+        choice = typer.prompt(
+            "Select version",
+            type=int,
+            default=1,
+        )
+
+        if choice < 1 or choice > len(artifacts):
+            console.print("[red]Invalid selection.[/red]")
+            raise typer.Exit(1) from None
+
+        return artifacts[choice - 1]

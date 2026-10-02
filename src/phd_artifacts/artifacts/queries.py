@@ -8,7 +8,12 @@ from phd_artifacts.artifacts.discovery import (
     discover_artifacts,
     discover_remote_artifacts,
 )
-from phd_artifacts.artifacts.exceptions import ArtifactAmbiguousError, ArtifactNotFoundError
+from phd_artifacts.artifacts.exceptions import (
+    ArtifactAmbiguousError,
+    ArtifactNotFoundError,
+    RemoteArtifactAmbiguousError,
+    RemoteArtifactNotFoundError,
+)
 from phd_artifacts.artifacts.filtering import filter_artifacts
 from phd_artifacts.artifacts.models import Artifact, RemoteArtifact
 from phd_artifacts.core.config_filtering import ConfigFilter
@@ -140,3 +145,38 @@ def get_remote_artifacts(
         )
 
     return filtered
+
+
+def get_remote_artifact(
+    remote_name: str,
+    name: str,
+    project: str | None = None,
+    version: str | None = None,
+) -> RemoteArtifact:
+    """Resolve one remote artifact exactly."""
+
+    artifacts = get_remote_artifacts(
+        remote_name=remote_name,
+        project=project,
+    )
+
+    matches = [
+        artifact
+        for artifact in artifacts
+        if artifact.name == name and (version is None or artifact.version == version)
+    ]
+
+    if not matches:
+        raise RemoteArtifactNotFoundError(
+            name=name,
+            remote_name=remote_name,
+        )
+
+    if len(matches) > 1:
+        raise RemoteArtifactAmbiguousError(
+            name=name,
+            remote_name=remote_name,
+            artifacts=matches,
+        )
+
+    return matches[0]
