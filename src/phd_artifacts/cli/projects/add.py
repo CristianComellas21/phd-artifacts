@@ -9,21 +9,75 @@ console = Console()
 
 
 def add(
-    name: str = typer.Argument(...),
-    root: Path = typer.Argument(Path(".")),
-    logs: Path | None = typer.Option(None, "--logs"),
-    workspace_artifacts: Path | None = typer.Option(None, "--artifacts"),
+    name: str = typer.Argument(
+        ...,
+        help="Project name.",
+    ),
+    root: Path = typer.Option(
+        ...,
+        "--root",
+        "-r",
+        help="Project root directory.",
+    ),
+    logs: Path | None = typer.Option(
+        None,
+        "--logs",
+        help="Hydra logs directory.",
+    ),
+    workspace_artifacts: Path | None = typer.Option(
+        None,
+        "--workspace-artifacts",
+        help="Project-local artifact workspace.",
+    ),
+    python: Path | None = typer.Option(
+        None,
+        "--python",
+        help="Python executable used for project-specific tools.",
+    ),
+    exporter: str | None = typer.Option(
+        None,
+        "--exporter",
+        help="Portable weight exporter, relative to the project root.",
+    ),
+    exporter_arg: list[str] | None = typer.Option(
+        None,
+        "--exporter-arg",
+        help=("Argument passed to the exporter. Can be repeated."),
+    ),
 ):
-    """Register a project."""
+    """Register a research project."""
 
-    project = add_project(
-        name=name,
-        root=root,
-        logs=logs,
-        workspace_artifacts=workspace_artifacts,
-    )
+    try:
+        project = add_project(
+            name=name,
+            root=root,
+            logs=logs,
+            workspace_artifacts=workspace_artifacts,
+            python=python,
+            exporter=exporter,
+            exporter_args=exporter_arg,
+        )
 
-    console.print(f"[green]Project '{name}' added.[/green]")
+    except (
+        ValueError,
+        FileNotFoundError,
+    ) as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(1) from None
+
+    console.print(f"[green]Project '{name}' registered.[/green]")
+
     console.print(f"Root:      {project['root']}")
     console.print(f"Logs:      {project['logs']}")
     console.print(f"Artifacts: {project['workspace_artifacts']}")
+
+    if python_path := project.get("python"):
+        console.print(f"Python:    {python_path}")
+
+    if exporter_path := project.get("exporter"):
+        console.print(f"Exporter:  {exporter_path}")
+
+    exporter_args = project.get("exporter_args")
+
+    if exporter_args:
+        console.print(f"Args:      {' '.join(exporter_args)}")
