@@ -29,9 +29,9 @@ def push_artifact(
 ) -> PushResult:
     """Push a promoted artifact to a configured remote."""
 
-    valid, _, _ = verify_artifact(artifact)
+    verification = verify_artifact(artifact)
 
-    if not valid:
+    if not verification.ok:
         raise RuntimeError(f"Artifact '{artifact.name}' failed integrity verification.")
 
     remote = get_remote(remote_name)
