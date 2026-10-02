@@ -2,7 +2,8 @@ import typer
 
 from phd_artifacts.artifacts import PushAction, RemoteArtifactConflictError, push_artifact
 from phd_artifacts.cli.artifacts.common import resolve_artifact_or_exit
-from phd_artifacts.cli.ui import console
+from phd_artifacts.cli.remotes.common import resolve_remote_name
+from phd_artifacts.cli.ui import confirm, console
 from phd_artifacts.remotes.backends.exceptions import UnsupportedBackendError
 from phd_artifacts.remotes.exceptions import RemoteNotFoundError
 
@@ -45,15 +46,33 @@ def push(
         project=project,
     )
 
+    remote_name = resolve_remote_name(remote)
+
     try:
         result = push_artifact(
             artifact,
-            remote_name=remote,
+            remote_name=remote_name,
             force=force,
         )
 
+    except RemoteArtifactConflictError as exc:
+        if force:
+            console.print(f"[error]{exc}[/error]")
+            raise typer.Exit(1) from None
+
+        if not confirm(
+            f"Remote artifact '{artifact.name}' differs. Overwrite remote copy?",
+            default=False,
+        ):
+            raise typer.Exit(0) from None
+
+        result = push_artifact(
+            artifact=artifact,
+            remote_name=remote_name,
+            force=True,
+        )
+
     except (
-        RemoteArtifactConflictError,
         RemoteNotFoundError,
         UnsupportedBackendError,
         ValueError,

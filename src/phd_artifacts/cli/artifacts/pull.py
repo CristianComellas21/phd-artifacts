@@ -4,7 +4,8 @@ from phd_artifacts.artifacts import pull_artifact
 from phd_artifacts.artifacts.exceptions import LocalArtifactConflictError
 from phd_artifacts.artifacts.transfer import PullAction
 from phd_artifacts.cli.artifacts.common import resolve_remote_artifact_or_exit
-from phd_artifacts.cli.ui import console
+from phd_artifacts.cli.remotes.common import resolve_remote_name
+from phd_artifacts.cli.ui import confirm, console
 
 
 def pull(
@@ -38,9 +39,11 @@ def pull(
 ):
     """Pull a promoted artifact from a configured remote."""
 
+    remote_name = resolve_remote_name(remote)
+
     artifact = resolve_remote_artifact_or_exit(
         console=console,
-        remote_name=remote,
+        remote_name=remote_name,
         name=name,
         project=project,
         version=version,
@@ -53,8 +56,20 @@ def pull(
         )
 
     except LocalArtifactConflictError as exc:
-        console.print(f"[error]{exc}[/error]")
-        raise typer.Exit(1) from None
+        if force:
+            console.print(f"[error]{exc}[/error]")
+            raise typer.Exit(1) from None
+
+        if not confirm(
+            f"Local artifact '{artifact.name}' differs. Overwrite local copy?",
+            default=False,
+        ):
+            raise typer.Exit(0) from None
+
+        result = pull_artifact(
+            artifact=artifact,
+            force=True,
+        )
     except RuntimeError as exc:
         console.print(f"[error]{exc}[/error]")
         raise typer.Exit(1) from None
