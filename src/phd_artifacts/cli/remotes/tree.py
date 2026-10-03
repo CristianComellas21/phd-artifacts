@@ -1,5 +1,6 @@
 import typer
 
+from phd_artifacts.cli.remotes.common import resolve_remote_name
 from phd_artifacts.cli.ui import console
 from phd_artifacts.remotes import tree_remote
 from phd_artifacts.remotes.backends.exceptions import (
@@ -10,7 +11,7 @@ from phd_artifacts.remotes.exceptions import RemoteError
 
 def tree(
     name: str = typer.Argument(
-        ...,
+        None,
         help="Remote name.",
     ),
     path: str | None = typer.Argument(
@@ -32,9 +33,11 @@ def tree(
 ):
     """Show a remote directory tree."""
 
+    remote_name = resolve_remote_name(name)
+
     try:
         entries = tree_remote(
-            name=name,
+            name=remote_name,
             path=path or "",
             max_depth=depth,
         )

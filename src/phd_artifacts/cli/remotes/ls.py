@@ -13,7 +13,7 @@ from phd_artifacts.remotes.exceptions import RemoteError
 
 def ls(
     name: str = typer.Argument(
-        ...,
+        None,
         help="Remote name.",
     ),
     path: str | None = typer.Argument(
