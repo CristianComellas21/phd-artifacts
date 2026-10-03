@@ -8,7 +8,7 @@ from phd_artifacts.artifacts import promote_checkpoints
 from phd_artifacts.artifacts.checkpoints import infer_checkpoint_role
 from phd_artifacts.artifacts.models import CheckpointSelection
 from phd_artifacts.cli.runs.common import resolve_run_or_exit
-from phd_artifacts.cli.ui import checkbox, console, text
+from phd_artifacts.cli.ui import activity, checkbox, console, text
 from phd_artifacts.runs import get_run_checkpoints
 
 
@@ -158,12 +158,14 @@ def promote(
     selections = _build_selections(selected_paths)
 
     try:
-        destination = promote_checkpoints(
-            run=run,
-            checkpoints=selections,
-            name=name,
-            no_export=no_export,
-        )
+        with activity("Promoting artifact...") as progress:
+            destination = promote_checkpoints(
+                run=run,
+                checkpoints=selections,
+                name=name,
+                no_export=no_export,
+                progress=progress,
+            )
 
     except FileExistsError as exc:
         console.print(f"[error]{exc}[/error]")

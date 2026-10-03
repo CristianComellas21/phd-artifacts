@@ -9,6 +9,7 @@ from phd_artifacts.artifacts.export import export_portable_weights
 from phd_artifacts.artifacts.models import CheckpointSelection
 from phd_artifacts.artifacts.verification import compute_sha256
 from phd_artifacts.core.config import load_config
+from phd_artifacts.core.progress import NULL_PROGRESS, ProgressReporter
 from phd_artifacts.projects.service import get_project
 from phd_artifacts.runs.models import Run
 
@@ -32,6 +33,7 @@ def promote_checkpoints(
     checkpoints: list[CheckpointSelection],
     name: str,
     no_export: bool = False,
+    progress: ProgressReporter = NULL_PROGRESS,
 ) -> Path:
     """Promote run checkpoints into the persistent artifact store."""
 
@@ -45,6 +47,8 @@ def promote_checkpoints(
 
     if destination.exists():
         raise FileExistsError(f"Artifact already exists: {destination}")
+
+    progress.update("Preparing artifact")
 
     destination.mkdir(parents=True)
 
@@ -60,6 +64,8 @@ def promote_checkpoints(
 
             checkpoint_destination = checkpoints_dir / f"{role}.ckpt"
 
+            progress.update(f"Copying checkpoint '{role}'")
+
             shutil.copy2(
                 source_checkpoint,
                 checkpoint_destination,
@@ -68,6 +74,8 @@ def promote_checkpoints(
             portable_files: list[dict] = []
 
             if not no_export:
+                progress.update(f"Exporting portable weights for '{role}'")
+
                 export_result = export_portable_weights(
                     checkpoint_path=checkpoint_destination,
                     artifact_path=destination,
@@ -76,6 +84,7 @@ def promote_checkpoints(
                 )
 
                 if export_result is not None:
+                    progress.update(f"Computing portable checksums for '{role}'")
                     for path in export_result.files:
                         portable_files.append(
                             {
@@ -84,6 +93,8 @@ def promote_checkpoints(
                                 "sha256": compute_sha256(path),
                             }
                         )
+
+            progress.update(f"Computing checksums for '{role}'")
 
             checkpoint_metadata[role] = {
                 "path": checkpoint_destination.relative_to(destination).as_posix(),
@@ -105,6 +116,8 @@ def promote_checkpoints(
             source = hydra_dir / filename
 
             if source.is_file():
+                progress.update("Copying Hydra configuration")
+
                 shutil.copy2(
                     source,
                     destination / filename,
@@ -135,11 +148,15 @@ def promote_checkpoints(
                 "exporter": project_config["exporter"],
             }
 
+        progress.update("Writing metadata")
+
         with (destination / "metadata.toml").open("wb") as file:
             tomli_w.dump(
                 metadata,
                 file,
             )
+
+        progress.update("Finalizing artifact")
 
     except Exception:
         shutil.rmtree(

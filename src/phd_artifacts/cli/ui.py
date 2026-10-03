@@ -1,6 +1,10 @@
+from collections.abc import Generator
+from contextlib import contextmanager
+
 import questionary
 import typer
 from rich.console import Console
+from rich.status import Status
 
 from phd_artifacts.cli.theme import (
     QUESTIONARY_COMMON,
@@ -9,6 +13,23 @@ from phd_artifacts.cli.theme import (
 )
 
 console = Console(theme=RICH_THEME)
+
+
+class Activity:
+    def __init__(self, status: Status):
+        self._status = status
+
+    def update(self, message: str) -> None:
+        self._status.update(f"[info]{message}[/info]")
+
+
+@contextmanager
+def activity(message: str) -> Generator[Activity]:
+    with console.status(
+        f"[info]{message}[/info]",
+        spinner="dots",
+    ) as status:
+        yield Activity(status)
 
 
 def select(
