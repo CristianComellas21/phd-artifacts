@@ -6,7 +6,8 @@ from phd_artifacts.artifacts.transfer import (
 from phd_artifacts.cli.artifacts.common import (
     resolve_artifact_or_exit,
 )
-from phd_artifacts.cli.ui import console
+from phd_artifacts.cli.remotes.common import resolve_remote_name
+from phd_artifacts.cli.ui import activity, console
 from phd_artifacts.remotes.exceptions import RemoteError
 from phd_artifacts.remotes.status import RemoteStatus
 
@@ -17,7 +18,7 @@ def status(
         help="Artifact name.",
     ),
     remote: str = typer.Option(
-        ...,
+        None,
         "--remote",
         "-r",
         help="Remote to check.",
@@ -44,11 +45,13 @@ def status(
         project=project,
     )
 
+    remote_name = resolve_remote_name(remote)
     try:
-        comparison = get_artifact_remote_status(
-            artifact,
-            remote_name=remote,
-        )
+        with activity(f"Comparing artifact with '{remote_name}'"):
+            comparison = get_artifact_remote_status(
+                artifact,
+                remote_name=remote_name,
+            )
     except (RemoteError, RuntimeError) as exc:
         console.print(f"[error]{exc}[/error]")
         raise typer.Exit(1) from None
@@ -56,7 +59,7 @@ def status(
     console.print(f"[accent]{artifact.name}[/accent]\n")
     console.print(f"Project:  {artifact.project}")
     console.print(f"Version:  {artifact.version}")
-    console.print(f"Remote:   {remote}")
+    console.print(f"Remote:   {remote_name}")
 
     match comparison.status:
         case RemoteStatus.UP_TO_DATE:
