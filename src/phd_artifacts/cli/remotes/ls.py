@@ -2,7 +2,7 @@ import typer
 from rich.table import Table
 
 from phd_artifacts.cli.remotes.common import resolve_remote_name
-from phd_artifacts.cli.ui import console
+from phd_artifacts.cli.ui import activity, console
 from phd_artifacts.core.display import format_size
 from phd_artifacts.remotes import list_remote
 from phd_artifacts.remotes.backends.exceptions import (
@@ -26,10 +26,11 @@ def ls(
     remote_name = resolve_remote_name(name)
 
     try:
-        entries = list_remote(
-            name=remote_name,
-            path=path or "",
-        )
+        with activity(f"Listing remote '{remote_name}'"):
+            entries = list_remote(
+                name=remote_name,
+                path=path or "",
+            )
 
     except (
         RemoteError,

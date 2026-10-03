@@ -1,7 +1,7 @@
 import typer
 
 from phd_artifacts.cli.remotes.common import resolve_remote_name
-from phd_artifacts.cli.ui import console
+from phd_artifacts.cli.ui import activity, console
 from phd_artifacts.remotes import tree_remote
 from phd_artifacts.remotes.backends.exceptions import (
     UnsupportedBackendError,
@@ -36,11 +36,12 @@ def tree(
     remote_name = resolve_remote_name(name)
 
     try:
-        entries = tree_remote(
-            name=remote_name,
-            path=path or "",
-            max_depth=depth,
-        )
+        with activity(f"Reading remote tree '{remote_name}'"):
+            entries = tree_remote(
+                name=remote_name,
+                path=path or "",
+                max_depth=depth,
+            )
     except (
         RemoteError,
         UnsupportedBackendError,
