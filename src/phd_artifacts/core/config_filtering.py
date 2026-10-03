@@ -13,6 +13,7 @@ class ConfigOperator(StrEnum):
     LT = "<"
     LE = "<="
     CONTAINS = "~="
+    NOT_CONTAINS = "!~="
 
 
 @dataclass(frozen=True)
@@ -25,6 +26,7 @@ class ConfigFilter:
 _OPERATORS = (
     ConfigOperator.GE,
     ConfigOperator.LE,
+    ConfigOperator.NOT_CONTAINS,
     ConfigOperator.NE,
     ConfigOperator.CONTAINS,
     ConfigOperator.EQ,
@@ -64,7 +66,8 @@ def parse_config_filter(expression: str) -> ConfigFilter:
 
     raise ValueError(
         f"Invalid config filter '{expression}'. "
-        "Expected formats such as key=value, key>=value or key~=value."
+        "Expected formats such as key=value, key>=value, "
+        "key~=value or key!~=value."
     )
 
 
@@ -144,6 +147,9 @@ def matches_value(
     if operator is ConfigOperator.CONTAINS:
         return str(expected).lower() in str(actual).lower()
 
+    if operator is ConfigOperator.NOT_CONTAINS:
+        return str(expected).lower() not in str(actual).lower()
+
     try:
         if operator is ConfigOperator.GT:
             return actual > expected
@@ -194,6 +200,22 @@ def matches_config_filter_any(
         config,
         config_filter.key,
     )
+
+    if not values:
+        return False
+
+    if config_filter.operator in {
+        ConfigOperator.NE,
+        ConfigOperator.NOT_CONTAINS,
+    }:
+        return all(
+            matches_value(
+                actual=value,
+                operator=config_filter.operator,
+                expected=config_filter.value,
+            )
+            for value in values
+        )
 
     return any(
         matches_value(
