@@ -1,11 +1,60 @@
 import typer
 
-from phd_artifacts.artifacts import pull_artifact
 from phd_artifacts.artifacts.exceptions import LocalArtifactConflictError
-from phd_artifacts.artifacts.transfer import PullAction
+from phd_artifacts.artifacts.models import RemoteArtifact
+from phd_artifacts.artifacts.transfer import (
+    PullAction,
+    PullResult,
+    perform_pull,
+    prepare_pull,
+    verify_pulled_artifact,
+)
 from phd_artifacts.cli.artifacts.common import resolve_remote_artifact_or_exit
 from phd_artifacts.cli.remotes.common import resolve_remote_name
-from phd_artifacts.cli.ui import confirm, console
+from phd_artifacts.cli.ui import activity, confirm, console
+
+
+def _pull_artifact(
+    artifact: RemoteArtifact,
+    force: bool,
+) -> PullResult:
+    """Pull a promoted artifact from a configured remote."""
+
+    def prepare(force_value: bool):
+        with activity("Preparing download") as reporter:
+            return prepare_pull(
+                artifact=artifact,
+                force=force_value,
+                progress=reporter,
+            )
+
+    try:
+        try:
+            prepared = prepare(force)
+
+        except LocalArtifactConflictError:
+            if not confirm(
+                f"Local artifact '{artifact.name}' differs. Overwrite local copy?",
+                default=False,
+            ):
+                raise typer.Exit(0) from None
+
+            prepared = prepare(True)
+
+        result = perform_pull(prepared)
+
+        if result.action is not PullAction.ALREADY_UP_TO_DATE:
+            with activity("Verifying download") as reporter:
+                verify_pulled_artifact(
+                    prepared,
+                    progress=reporter,
+                )
+
+        return result
+
+    except RuntimeError as exc:
+        console.print(f"[error]{exc}[/error]")
+        raise typer.Exit(1) from None
 
 
 def pull(
@@ -13,8 +62,8 @@ def pull(
         ...,
         help="Artifact name.",
     ),
-    remote: str = typer.Option(
-        ...,
+    remote: str | None = typer.Option(
+        None,
         "--remote",
         "-r",
         help="Remote name.",
@@ -49,39 +98,20 @@ def pull(
         version=version,
     )
 
-    try:
-        result = pull_artifact(
-            artifact=artifact,
-            force=force,
-        )
+    result = _pull_artifact(
+        artifact=artifact,
+        force=force,
+    )
 
-    except LocalArtifactConflictError as exc:
-        if force:
-            console.print(f"[error]{exc}[/error]")
-            raise typer.Exit(1) from None
+    match result.action:
+        case PullAction.ALREADY_UP_TO_DATE:
+            console.print("[success]Artifact is already up to date.[/success]")
 
-        if not confirm(
-            f"Local artifact '{artifact.name}' differs. Overwrite local copy?",
-            default=False,
-        ):
-            raise typer.Exit(0) from None
+        case PullAction.OVERWRITTEN:
+            console.print("[warning]Artifact overwritten from remote.[/warning]")
 
-        result = pull_artifact(
-            artifact=artifact,
-            force=True,
-        )
-    except RuntimeError as exc:
-        console.print(f"[error]{exc}[/error]")
-        raise typer.Exit(1) from None
-
-    if result.action is PullAction.ALREADY_UP_TO_DATE:
-        console.print("[success]Artifact is already up to date.[/success]")
-
-    elif result.action is PullAction.OVERWRITTEN:
-        console.print("[warning]Artifact overwritten from remote.[/warning]")
-
-    else:
-        console.print("[success]Artifact downloaded successfully.[/success]")
+        case PullAction.DOWNLOADED:
+            console.print("[success]Artifact downloaded successfully.[/success]")
 
     console.print(f"Remote:   {artifact.remote}")
     console.print(f"Artifact: {artifact.name}")

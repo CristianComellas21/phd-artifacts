@@ -15,8 +15,11 @@ from phd_artifacts.artifacts.transfer import (
     PullResult,
     PushAction,
     PushResult,
-    pull_artifact,
-    push_artifact,
+    perform_pull,
+    perform_push,
+    prepare_pull,
+    prepare_push,
+    verify_pulled_artifact,
 )
 from phd_artifacts.artifacts.verification import verify_artifact
 from phd_artifacts.remotes.discovery import discover_remote_artifacts
@@ -32,12 +35,15 @@ __all__ = [
     "filter_artifacts",
     "promote_checkpoints",
     "verify_artifact",
-    "push_artifact",
+    "prepare_push",
+    "perform_push",
     "PushAction",
     "PushResult",
     "PullAction",
     "PullResult",
-    "pull_artifact",
+    "prepare_pull",
+    "perform_pull",
+    "verify_pulled_artifact",
     "RemoteArtifactConflictError",
     "remove_artifact",
 ]
