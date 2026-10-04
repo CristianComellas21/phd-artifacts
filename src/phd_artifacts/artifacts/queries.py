@@ -18,6 +18,7 @@ from phd_artifacts.artifacts.filtering import filter_artifacts
 from phd_artifacts.artifacts.models import Artifact, RemoteArtifact
 from phd_artifacts.core.config_filtering import ConfigFilter
 from phd_artifacts.core.filtering import is_since, matches_text
+from phd_artifacts.core.progress import NULL_PROGRESS, ProgressReporter
 
 
 def get_artifacts(
@@ -94,11 +95,15 @@ def get_remote_artifacts(
     since: timedelta | None = None,
     config_filters: list[ConfigFilter] | None = None,
     config_any_filters: list[ConfigFilter] | None = None,
+    progress: ProgressReporter = NULL_PROGRESS,
 ) -> list[RemoteArtifact]:
+
+    progress.update("Scanning remote artifacts")
     artifacts = discover_remote_artifacts(remote_name)
 
     filtered: list[RemoteArtifact] = []
 
+    progress.update("Reading artifacts metadata")
     for artifact in artifacts:
         metadata = artifact.metadata
 
@@ -137,6 +142,7 @@ def get_remote_artifacts(
 
         filtered.append(artifact)
 
+    progress.update("Filtering artifacts by config")
     if filtered or config_any_filters:
         artifacts = filter_remote_artifacts_by_config(
             artifacts,

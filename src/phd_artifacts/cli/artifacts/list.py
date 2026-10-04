@@ -7,7 +7,7 @@ from rich.table import Table
 from phd_artifacts.artifacts import get_artifacts
 from phd_artifacts.artifacts.models import Artifact, RemoteArtifact
 from phd_artifacts.artifacts.queries import get_remote_artifacts
-from phd_artifacts.cli.ui import console
+from phd_artifacts.cli.ui import activity, console
 from phd_artifacts.core.config_filtering import ConfigFilter, parse_config_filters
 from phd_artifacts.core.filtering import parse_duration
 from phd_artifacts.remotes.backends.exceptions import UnsupportedBackendError
@@ -38,17 +38,21 @@ def _get_artifacts_for_list(
             config_any_filters=config_any_filters,
         )
 
-    return get_remote_artifacts(
-        remote_name=remote,
-        project=project,
-        artifact_type=artifact_type,
-        name=name,
-        experiment=experiment,
-        model=model,
-        since=since,
-        config_filters=config_filters,
-        config_any_filters=config_any_filters,
-    )
+    with activity(f"Reading artifacts from '{remote}'") as reporter:
+        remote_artifacts = get_remote_artifacts(
+            remote_name=remote,
+            project=project,
+            artifact_type=artifact_type,
+            name=name,
+            experiment=experiment,
+            model=model,
+            since=since,
+            config_filters=config_filters,
+            config_any_filters=config_any_filters,
+            progress=reporter,
+        )
+
+    return remote_artifacts
 
 
 def _print_empty_message(
