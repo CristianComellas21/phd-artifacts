@@ -12,7 +12,9 @@ from phd_artifacts.artifacts.queries import (
 from phd_artifacts.artifacts.remove import remove_artifact
 from phd_artifacts.artifacts.status import (
     ArtifactRemoteState,
+    RemoteArtifactLocalState,
     get_artifact_remote_states,
+    get_remote_artifact_local_states,
 )
 from phd_artifacts.artifacts.transfer import (
     PullAction,
@@ -37,6 +39,7 @@ __all__ = [
     "get_artifact_remote_states",
     "get_artifact",
     "get_artifacts",
+    "get_remote_artifact_local_states",
     "get_remote_artifact",
     "get_remote_artifacts",
     "perform_pull",
@@ -49,6 +52,7 @@ __all__ = [
     "PushAction",
     "PushResult",
     "RemoteArtifactConflictError",
+    "RemoteArtifactLocalState",
     "remove_artifact",
     "verify_artifact",
     "verify_pulled_artifact",
