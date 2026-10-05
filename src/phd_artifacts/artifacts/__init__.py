@@ -10,6 +10,10 @@ from phd_artifacts.artifacts.queries import (
     get_remote_artifacts,
 )
 from phd_artifacts.artifacts.remove import remove_artifact
+from phd_artifacts.artifacts.status import (
+    ArtifactRemoteState,
+    get_artifact_remote_states,
+)
 from phd_artifacts.artifacts.transfer import (
     PullAction,
     PullResult,
@@ -26,24 +30,26 @@ from phd_artifacts.remotes.discovery import discover_remote_artifacts
 
 __all__ = [
     "Artifact",
+    "ArtifactRemoteState",
     "discover_artifacts",
     "discover_remote_artifacts",
+    "filter_artifacts",
+    "get_artifact_remote_states",
     "get_artifact",
     "get_artifacts",
     "get_remote_artifact",
     "get_remote_artifacts",
-    "filter_artifacts",
-    "promote_checkpoints",
-    "verify_artifact",
-    "prepare_push",
+    "perform_pull",
     "perform_push",
-    "PushAction",
-    "PushResult",
+    "prepare_pull",
+    "prepare_push",
+    "promote_checkpoints",
     "PullAction",
     "PullResult",
-    "prepare_pull",
-    "perform_pull",
-    "verify_pulled_artifact",
+    "PushAction",
+    "PushResult",
     "RemoteArtifactConflictError",
     "remove_artifact",
+    "verify_artifact",
+    "verify_pulled_artifact",
 ]

@@ -1,5 +1,8 @@
 import typer
+from rich.table import Table
 
+from phd_artifacts.artifacts.queries import get_artifacts
+from phd_artifacts.artifacts.status import get_artifact_remote_states
 from phd_artifacts.artifacts.transfer import (
     get_artifact_remote_status,
 )
@@ -12,12 +15,22 @@ from phd_artifacts.remotes.exceptions import RemoteError
 from phd_artifacts.remotes.status import RemoteStatus
 
 
+def _format_status(status: RemoteStatus) -> str:
+    match status:
+        case RemoteStatus.UP_TO_DATE:
+            return "[success]up to date[/success]"
+        case RemoteStatus.MISSING:
+            return "[warning]missing[/warning]"
+        case RemoteStatus.DIFFERENT:
+            return "[error]different[/error]"
+
+
 def status(
-    name: str = typer.Argument(
-        ...,
-        help="Artifact name.",
+    name: str | None = typer.Argument(
+        None,
+        help="Artifact name. Omit to show all artifacts.",
     ),
-    remote: str = typer.Option(
+    remote: str | None = typer.Option(
         None,
         "--remote",
         "-r",
@@ -36,37 +49,75 @@ def status(
         help="Project name.",
     ),
 ):
-    """Show the remote status of a promoted artifact."""
+    """Show the remote status of promoted artifacts."""
 
-    artifact = resolve_artifact_or_exit(
-        console=console,
-        name=name,
-        version=version,
+    if name is None and version is not None:
+        raise typer.BadParameter("--version requires an artifact name.")
+
+    remote_name = resolve_remote_name(remote)
+
+    if name is not None:
+        artifact = resolve_artifact_or_exit(
+            console=console,
+            name=name,
+            version=version,
+            project=project,
+        )
+
+        try:
+            with activity(f"Comparing artifact with '{remote_name}'"):
+                comparison = get_artifact_remote_status(
+                    artifact,
+                    remote_name=remote_name,
+                )
+        except (RemoteError, RuntimeError) as exc:
+            console.print(f"[error]{exc}[/error]")
+            raise typer.Exit(1) from None
+
+        console.print(f"[accent]{artifact.name}[/accent]\n")
+        console.print(f"Project:  {artifact.project}")
+        console.print(f"Version:  {artifact.version}")
+        console.print(f"Remote:   {remote_name}")
+        console.print(f"Status:   {_format_status(comparison.status)}")
+
+        return
+
+    artifacts = get_artifacts(
         project=project,
     )
 
-    remote_name = resolve_remote_name(remote)
+    if not artifacts:
+        console.print("[warning]No local artifacts found.[/warning]")
+        raise typer.Exit(0)
+
     try:
-        with activity(f"Comparing artifact with '{remote_name}'"):
-            comparison = get_artifact_remote_status(
-                artifact,
+        with activity(f"Checking artifacts against '{remote_name}'") as reporter:
+            states = get_artifact_remote_states(
+                artifacts=artifacts,
                 remote_name=remote_name,
+                progress=reporter,
             )
     except (RemoteError, RuntimeError) as exc:
         console.print(f"[error]{exc}[/error]")
         raise typer.Exit(1) from None
 
-    console.print(f"[accent]{artifact.name}[/accent]\n")
-    console.print(f"Project:  {artifact.project}")
-    console.print(f"Version:  {artifact.version}")
-    console.print(f"Remote:   {remote_name}")
+    table = Table(
+        "Project",
+        "Name",
+        "Version",
+        "Remote",
+        "Status",
+    )
 
-    match comparison.status:
-        case RemoteStatus.UP_TO_DATE:
-            console.print("Status:   [success]up to date[/success]")
+    for state in states:
+        status_text = _format_status(state.status)
 
-        case RemoteStatus.MISSING:
-            console.print("Status:   [warning]missing[/warning]")
+        table.add_row(
+            state.artifact.project,
+            state.artifact.name,
+            state.artifact.version,
+            remote_name,
+            status_text,
+        )
 
-        case RemoteStatus.DIFFERENT:
-            console.print("Status:   [error]different[/error]")
+    console.print(table)
