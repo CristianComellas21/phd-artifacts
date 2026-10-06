@@ -69,7 +69,7 @@ def _read_remote_metadata(
     return path, tomllib.loads(text)
 
 
-def discover_remote_artifacts(
+def scan_remote_artifacts(
     remote_name: str,
 ) -> list[RemoteArtifact]:
     remote = get_remote(remote_name)
