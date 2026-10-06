@@ -6,7 +6,7 @@ from phd_artifacts.artifacts.config import (
 )
 from phd_artifacts.artifacts.discovery import (
     discover_artifacts,
-    scan_remote_artifacts,
+    discover_remote_artifacts,
 )
 from phd_artifacts.artifacts.exceptions import (
     ArtifactAmbiguousError,
@@ -99,7 +99,7 @@ def get_remote_artifacts(
 ) -> list[RemoteArtifact]:
 
     progress.update("Scanning remote artifacts")
-    artifacts = scan_remote_artifacts(remote_name)
+    artifacts = discover_remote_artifacts(remote_name)
 
     filtered: list[RemoteArtifact] = []
 

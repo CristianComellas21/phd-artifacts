@@ -4,6 +4,7 @@ from functools import partial
 from pathlib import Path, PurePosixPath
 
 from phd_artifacts.artifacts.models import Artifact, RemoteArtifact
+from phd_artifacts.artifacts.remote_index import read_remote_index, remote_artifacts_from_index
 from phd_artifacts.core.config import load_config
 from phd_artifacts.remotes.backends.registry import get_backend
 from phd_artifacts.remotes.service import get_remote
@@ -116,3 +117,18 @@ def scan_remote_artifacts(
         )
 
     return artifacts
+
+
+def discover_remote_artifacts(
+    remote_name: str,
+) -> list[RemoteArtifact]:
+    try:
+        index = read_remote_index(remote_name)
+
+    except Exception:
+        return scan_remote_artifacts(remote_name)
+
+    return remote_artifacts_from_index(
+        remote_name=remote_name,
+        index=index,
+    )

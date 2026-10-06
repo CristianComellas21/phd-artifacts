@@ -9,6 +9,7 @@ from phd_artifacts.artifacts.exceptions import (
     RemoteArtifactConflictError,
 )
 from phd_artifacts.artifacts.models import Artifact, RemoteArtifact
+from phd_artifacts.artifacts.remote_index import upsert_remote_index_entry
 from phd_artifacts.artifacts.verification import verify_artifact
 from phd_artifacts.core.config import load_config
 from phd_artifacts.core.progress import NULL_PROGRESS, ProgressReporter
@@ -116,10 +117,10 @@ def prepare_push(
     )
 
 
-def perform_push(
+def perform_push_transfer(
     prepared: PreparedPush,
 ) -> PushResult:
-    """Perform a previously prepared artifact push."""
+    """Perform the artifact transfer to the remote."""
 
     if prepared.action is PushAction.ALREADY_UP_TO_DATE:
         return PushResult(
@@ -139,6 +140,17 @@ def perform_push(
     return PushResult(
         destination=prepared.destination,
         action=prepared.action,
+    )
+
+
+def finalize_push(
+    prepared: PreparedPush,
+) -> None:
+    """Finalize a successful push by updating the remote index."""
+
+    upsert_remote_index_entry(
+        remote_name=prepared.remote_name,
+        artifact=prepared.artifact,
     )
 
 

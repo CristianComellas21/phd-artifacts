@@ -13,7 +13,8 @@ from phd_artifacts.artifacts.status import (
 )
 from phd_artifacts.artifacts.transfer import (
     PushResult,
-    perform_push,
+    finalize_push,
+    perform_push_transfer,
     prepare_push,
 )
 from phd_artifacts.cli.artifacts.common import resolve_artifact_or_exit
@@ -52,7 +53,14 @@ def _push_artifact(
 
             prepared = prepare(True)
 
-        return perform_push(prepared)
+        # rclone owns the terminal here
+        result = perform_push_transfer(prepared)
+
+        # Our spinner resumes after the transfer
+        with activity("Updating remote index"):
+            finalize_push(prepared)
+
+        return result
 
     except (
         RemoteNotFoundError,

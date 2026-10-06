@@ -4,6 +4,7 @@ from phd_artifacts.cli.remotes.add import add
 from phd_artifacts.cli.remotes.check import check
 from phd_artifacts.cli.remotes.list import list_remote_configs
 from phd_artifacts.cli.remotes.ls import ls
+from phd_artifacts.cli.remotes.rebuild_index import rebuild_index
 from phd_artifacts.cli.remotes.remove import remove
 from phd_artifacts.cli.remotes.tree import tree
 
@@ -17,3 +18,4 @@ app.command("remove")(remove)
 app.command("check")(check)
 app.command("ls")(ls)
 app.command("tree")(tree)
+app.command("rebuild-index")(rebuild_index)
