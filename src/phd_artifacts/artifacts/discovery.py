@@ -1,4 +1,6 @@
 import tomllib
+from concurrent.futures import ThreadPoolExecutor
+from functools import partial
 from pathlib import Path, PurePosixPath
 
 from phd_artifacts.artifacts.models import Artifact, RemoteArtifact
@@ -54,6 +56,19 @@ def discover_artifacts() -> list[Artifact]:
     return artifacts
 
 
+def _read_remote_metadata(
+    backend,
+    remote,
+    path: PurePosixPath,
+) -> tuple[PurePosixPath, dict]:
+    text = backend.read_text(
+        remote=remote,
+        remote_path=path,
+    )
+
+    return path, tomllib.loads(text)
+
+
 def discover_remote_artifacts(
     remote_name: str,
 ) -> list[RemoteArtifact]:
@@ -65,21 +80,28 @@ def discover_remote_artifacts(
         remote_path=PurePosixPath(),
     )
 
-    metadata_entries = [
-        entry for entry in entries if not entry.is_dir and entry.name == "metadata.toml"
+    metadata_paths = [
+        entry.path for entry in entries if not entry.is_dir and entry.name == "metadata.toml"
     ]
 
     artifacts: list[RemoteArtifact] = []
 
-    for entry in metadata_entries:
-        content = backend.read_text(
-            remote=remote,
-            remote_path=entry.path,
+    reader = partial(
+        _read_remote_metadata,
+        backend,
+        remote,
+    )
+
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        metadata_results = list(
+            executor.map(
+                reader,
+                metadata_paths,
+            )
         )
 
-        metadata = tomllib.loads(content)
-
-        artifact_path = entry.path.parent
+    for metadata_path, metadata in metadata_results:
+        artifact_path = metadata_path.parent
 
         artifacts.append(
             RemoteArtifact(
