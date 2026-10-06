@@ -292,6 +292,33 @@ class RcloneBackend:
         if result.returncode != 0:
             raise RuntimeError(result.stderr.strip() or f"Failed to write remote file: {target}")
 
+    def remove(
+        self,
+        remote: Remote,
+        remote_path: PurePosixPath,
+    ) -> None:
+        self.check(remote)
+
+        target = self.get_target(
+            remote=remote,
+            remote_path=remote_path,
+        )
+
+        result = subprocess.run(
+            [
+                "rclone",
+                "purge",
+                target,
+            ],
+            capture_output=True,
+            text=True,
+        )
+
+        if result.returncode != 0:
+            message = result.stderr.strip() or result.stdout.strip()
+
+            raise RuntimeError(f"Could not remove remote artifact '{target}': {message}")
+
     @staticmethod
     def _check_available() -> None:
         if shutil.which("rclone") is None:

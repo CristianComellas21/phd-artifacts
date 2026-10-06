@@ -39,6 +39,13 @@ class RemoteBackend(Protocol):
         remote_path: PurePosixPath,
     ) -> str: ...
 
+    def write_text(
+        self,
+        remote: Remote,
+        remote_path: PurePosixPath,
+        text: str,
+    ) -> None: ...
+
     def push(
         self,
         remote: Remote,
@@ -59,3 +66,9 @@ class RemoteBackend(Protocol):
         source: Path,
         remote_path: PurePosixPath,
     ) -> RemoteComparison: ...
+
+    def remove(
+        self,
+        remote: Remote,
+        remote_path: PurePosixPath,
+    ) -> None: ...

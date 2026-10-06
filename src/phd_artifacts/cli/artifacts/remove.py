@@ -1,8 +1,17 @@
 import typer
 
 from phd_artifacts.artifacts import remove_artifact
-from phd_artifacts.cli.artifacts.common import resolve_artifact_or_exit
-from phd_artifacts.cli.ui import confirm, console
+from phd_artifacts.artifacts.remove import (
+    finalize_remote_removal,
+    perform_remote_removal,
+    prepare_remote_removal,
+)
+from phd_artifacts.cli.artifacts.common import (
+    resolve_artifact_or_exit,
+    resolve_remote_artifact_or_exit,
+)
+from phd_artifacts.cli.remotes.common import resolve_remote_name
+from phd_artifacts.cli.ui import activity, confirm, console
 
 
 def remove(
@@ -19,6 +28,12 @@ def remove(
         "-v",
         help="Artifact version.",
     ),
+    remote: str | None = typer.Option(
+        None,
+        "--remote",
+        "-r",
+        help="Remove the artifact from a remote instead of locally.",
+    ),
     yes: bool = typer.Option(
         False,
         "--yes",
@@ -26,10 +41,37 @@ def remove(
         help="Remove without confirmation.",
     ),
 ):
-    """Remove a local promoted artifact."""
+    """Remove a promoted artifact locally or from a remote."""
 
-    artifact = resolve_artifact_or_exit(
+    if remote is None:
+        artifact = resolve_artifact_or_exit(
+            console=console,
+            name=name,
+            version=version,
+            project=project,
+        )
+
+        if not yes:
+            confirmed = confirm(
+                f"Remove local artifact '{artifact.name}' version '{artifact.version}'?",
+                default=False,
+            )
+
+            if not confirmed:
+                raise typer.Exit(0)
+
+        remove_artifact(artifact)
+
+        console.print(
+            f"[success]Removed artifact '{artifact.name}' version '{artifact.version}'.[/success]"
+        )
+        return
+
+    remote_name = resolve_remote_name(remote)
+
+    artifact = resolve_remote_artifact_or_exit(
         console=console,
+        remote_name=remote_name,
         name=name,
         version=version,
         project=project,
@@ -37,15 +79,23 @@ def remove(
 
     if not yes:
         confirmed = confirm(
-            f"Remove artifact '{artifact.name}' version '{artifact.version}'?",
+            f"Remove artifact '{artifact.name}' version "
+            f"'{artifact.version}' from remote '{remote_name}'?",
             default=False,
         )
 
         if not confirmed:
             raise typer.Exit(0)
 
-    remove_artifact(artifact)
+    prepared = prepare_remote_removal(artifact)
+
+    with activity("Removing remote artifact"):
+        perform_remote_removal(prepared)
+
+    with activity("Updating remote index"):
+        finalize_remote_removal(prepared)
 
     console.print(
-        f"[success]Removed artifact '{artifact.name}' version '{artifact.version}'.[/success]"
+        f"[success]Removed artifact '{artifact.name}' version "
+        f"'{artifact.version}' from '{remote_name}'.[/success]"
     )
