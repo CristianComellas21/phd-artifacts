@@ -5,14 +5,13 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from phd_artifacts.artifacts import Artifact, get_artifact, get_remote_artifact
+from phd_artifacts.artifacts import Artifact, RemoteArtifact, get_artifact, get_remote_artifact
 from phd_artifacts.artifacts.exceptions import (
     ArtifactAmbiguousError,
     ArtifactNotFoundError,
     RemoteArtifactAmbiguousError,
     RemoteArtifactNotFoundError,
 )
-from phd_artifacts.artifacts.models import RemoteArtifact
 from phd_artifacts.artifacts.queries import get_artifacts, get_remote_artifacts
 from phd_artifacts.cli.ui import select
 
@@ -186,3 +185,37 @@ def resolve_remote_artifact_or_exit(
             raise typer.Exit() from None
 
         return cast(RemoteArtifact, selected)
+
+
+def resolve_checkpoint_role(
+    artifact: Artifact,
+    role: str | None,
+) -> str:
+    roles = artifact.checkpoint_roles()
+
+    if not roles:
+        raise typer.BadParameter(f"Artifact '{artifact.name}' contains no checkpoints.")
+
+    if role is not None:
+        if role not in roles:
+            raise typer.BadParameter(
+                f"Checkpoint role '{role}' not found. Available roles: {', '.join(roles)}"
+            )
+
+        return role
+
+    if len(roles) == 1:
+        return roles[0]
+
+    selected = select(
+        "Select checkpoint:",
+        [
+            questionary.Choice(
+                title=candidate,
+                value=candidate,
+            )
+            for candidate in roles
+        ],
+    )
+
+    return cast(str, selected)

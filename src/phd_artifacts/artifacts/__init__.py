@@ -1,7 +1,7 @@
 from phd_artifacts.artifacts.discovery import discover_artifacts
 from phd_artifacts.artifacts.exceptions import RemoteArtifactConflictError
 from phd_artifacts.artifacts.filtering import filter_artifacts
-from phd_artifacts.artifacts.models import Artifact
+from phd_artifacts.artifacts.models import Artifact, RemoteArtifact
 from phd_artifacts.artifacts.promotion import promote_checkpoints
 from phd_artifacts.artifacts.queries import (
     get_artifact,
@@ -56,4 +56,5 @@ __all__ = [
     "remove_artifact",
     "verify_artifact",
     "verify_pulled_artifact",
+    "RemoteArtifact",
 ]

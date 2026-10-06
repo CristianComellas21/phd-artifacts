@@ -1,4 +1,9 @@
-from phd_artifacts.artifacts.models import Artifact, RemoteArtifact
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from phd_artifacts.artifacts.models import Artifact, RemoteArtifact
 
 
 class ArtifactError(Exception):
@@ -77,4 +82,18 @@ class RemoteArtifactAmbiguousError(ArtifactError):
 
         super().__init__(
             f"Artifact '{name}' has multiple matching versions on remote '{remote_name}'."
+        )
+
+
+class CheckpointRoleNotFoundError(Exception):
+    def __init__(
+        self,
+        role: str,
+        available: list[str],
+    ):
+        self.role = role
+        self.available = available
+
+        super().__init__(
+            f"Checkpoint role '{role}' not found. Available roles: {', '.join(available)}"
         )
