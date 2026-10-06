@@ -24,7 +24,7 @@ def _parse_run_path(
 
     parts = relative_path.parts
 
-    for i in range(len(parts) - 1, 0, -1):
+    for i in range(1, len(parts)):
         try:
             created_at = datetime.strptime(
                 f"{parts[i - 1]} {parts[i]}",
