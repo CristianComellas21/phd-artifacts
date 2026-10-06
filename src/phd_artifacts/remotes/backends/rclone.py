@@ -271,6 +271,27 @@ class RcloneBackend:
 
         return result.stdout
 
+    def write_text(
+        self,
+        remote: Remote,
+        remote_path: PurePosixPath,
+        text: str,
+    ) -> None:
+        target = self.get_target(
+            remote=remote,
+            remote_path=remote_path,
+        )
+
+        result = subprocess.run(
+            ["rclone", "rcat", target],
+            input=text,
+            text=True,
+            capture_output=True,
+        )
+
+        if result.returncode != 0:
+            raise RuntimeError(result.stderr.strip() or f"Failed to write remote file: {target}")
+
     @staticmethod
     def _check_available() -> None:
         if shutil.which("rclone") is None:
