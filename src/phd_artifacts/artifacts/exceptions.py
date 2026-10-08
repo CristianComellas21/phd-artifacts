@@ -97,3 +97,19 @@ class CheckpointRoleNotFoundError(Exception):
         super().__init__(
             f"Checkpoint role '{role}' not found. Available roles: {', '.join(available)}"
         )
+
+
+class RemoteIndexError(RuntimeError):
+    """Raised when a remote artifact index operation fails."""
+
+    def __init__(
+        self,
+        remote_name: str,
+        operation: str,
+        message: str,
+    ) -> None:
+        self.remote_name = remote_name
+        self.operation = operation
+        self.message = message
+
+        super().__init__(message)

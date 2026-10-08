@@ -219,3 +219,13 @@ def resolve_checkpoint_role(
     )
 
     return cast(str, selected)
+
+
+def warn_remote_index_update_failed(console: Console, remote_name: str) -> None:
+    console.print(
+        "[warning]The remote operation completed successfully, "
+        "but the remote index could not be updated.[/warning]"
+    )
+    console.print(
+        f"[muted]Run 'phd-artifact remote rebuild-index {remote_name}' to repair it.[/muted]"
+    )

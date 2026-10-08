@@ -1,6 +1,7 @@
 import typer
 
 from phd_artifacts.artifacts import remove_artifact
+from phd_artifacts.artifacts.exceptions import RemoteIndexError
 from phd_artifacts.artifacts.remove import (
     finalize_remote_removal,
     perform_remote_removal,
@@ -92,8 +93,20 @@ def remove(
     with activity("Removing remote artifact"):
         perform_remote_removal(prepared)
 
-    with activity("Updating remote index"):
-        finalize_remote_removal(prepared)
+    try:
+        with activity("Updating remote index"):
+            finalize_remote_removal(prepared)
+
+    except RemoteIndexError as exc:
+        console.print(
+            "[warning]Artifact was removed successfully, "
+            "but the remote index could not be updated.[/warning]"
+        )
+        console.print(f"[muted]Remote index operation failed: {exc.operation}[/muted]")
+        console.print(
+            f"[muted]Run 'phd-artifact remote rebuild-index "
+            f"{exc.remote_name}' to repair it.[/muted]"
+        )
 
     console.print(
         f"[success]Removed artifact '{artifact.name}' version "

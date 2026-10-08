@@ -5,6 +5,7 @@ import typer
 from rich.table import Table
 
 from phd_artifacts.artifacts import PushAction, RemoteArtifactConflictError
+from phd_artifacts.artifacts.exceptions import RemoteIndexError
 from phd_artifacts.artifacts.models import Artifact
 from phd_artifacts.artifacts.queries import get_artifacts
 from phd_artifacts.artifacts.status import (
@@ -57,8 +58,19 @@ def _push_artifact(
         result = perform_push_transfer(prepared)
 
         # Our spinner resumes after the transfer
-        with activity("Updating remote index"):
-            finalize_push(prepared)
+        try:
+            with activity("Updating remote index"):
+                finalize_push(prepared)
+
+        except RemoteIndexError as exc:
+            console.print(
+                "[warning]Artifact was uploaded successfully, "
+                "but the remote index could not be updated.[/warning]"
+            )
+            console.print(
+                f"[muted]Run 'phd-artifact remote rebuild-index "
+                f"{exc.remote_name}' to repair it.[/muted]"
+            )
 
         return result
 

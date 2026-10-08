@@ -2,6 +2,7 @@ import json
 from dataclasses import dataclass
 from pathlib import PurePosixPath
 
+from phd_artifacts.artifacts.exceptions import RemoteIndexError
 from phd_artifacts.artifacts.models import Artifact, RemoteArtifact
 from phd_artifacts.remotes.backends.registry import get_backend
 from phd_artifacts.remotes.service import get_remote
@@ -41,8 +42,28 @@ def _serialize_index(index: RemoteIndex) -> str:
     )
 
 
-def _deserialize_index(text: str) -> RemoteIndex:
-    data = json.loads(text)
+def _deserialize_index(
+    text: str,
+    remote_name: str,
+) -> RemoteIndex:
+    try:
+        data = json.loads(text)
+
+    except json.JSONDecodeError as exc:
+        raise RemoteIndexError(
+            remote_name=remote_name,
+            operation="read",
+            message="Remote index contains invalid JSON.",
+        ) from exc
+
+    version = data.get("version")
+
+    if version != INDEX_VERSION:
+        raise RemoteIndexError(
+            remote_name=remote_name,
+            operation="read",
+            message=f"Unsupported remote index version: {version}",
+        )
 
     return RemoteIndex(
         version=data["version"],
@@ -71,12 +92,23 @@ def read_remote_index(
     remote = get_remote(remote_name)
     backend = get_backend(remote.type)
 
-    text = backend.read_text(
-        remote=remote,
-        remote_path=INDEX_PATH,
-    )
+    try:
+        text = backend.read_text(
+            remote=remote,
+            remote_path=INDEX_PATH,
+        )
 
-    return _deserialize_index(text)
+        return _deserialize_index(text, remote_name)
+
+    except RemoteIndexError:
+        raise
+
+    except Exception as exc:
+        raise RemoteIndexError(
+            remote_name=remote_name,
+            operation="read",
+            message="Could not read remote index.",
+        ) from exc
 
 
 def write_remote_index(
@@ -86,11 +118,19 @@ def write_remote_index(
     remote = get_remote(remote_name)
     backend = get_backend(remote.type)
 
-    backend.write_text(
-        remote=remote,
-        remote_path=INDEX_PATH,
-        text=_serialize_index(index),
-    )
+    try:
+        backend.write_text(
+            remote=remote,
+            remote_path=INDEX_PATH,
+            text=_serialize_index(index),
+        )
+
+    except Exception as exc:
+        raise RemoteIndexError(
+            remote_name=remote_name,
+            operation="write",
+            message="Could not write remote index.",
+        ) from exc
 
 
 def rebuild_remote_index(
