@@ -3,17 +3,19 @@ from dataclasses import dataclass
 from pathlib import PurePosixPath
 
 from phd_artifacts.artifacts.exceptions import RemoteIndexError
+from phd_artifacts.artifacts.fingerprint import compute_artifact_fingerprint
 from phd_artifacts.artifacts.models import Artifact, RemoteArtifact
 from phd_artifacts.remotes.backends.registry import get_backend
 from phd_artifacts.remotes.service import get_remote
 
 INDEX_PATH = PurePosixPath("index.json")
-INDEX_VERSION = 1
+INDEX_VERSION = 2
 
 
 @dataclass
 class RemoteIndexEntry:
     path: PurePosixPath
+    fingerprint: str
     metadata: dict
 
 
@@ -29,6 +31,7 @@ def _serialize_index(index: RemoteIndex) -> str:
         "artifacts": [
             {
                 "path": entry.path.as_posix(),
+                "fingerprint": entry.fingerprint,
                 "metadata": entry.metadata,
             }
             for entry in index.artifacts
@@ -70,6 +73,7 @@ def _deserialize_index(
         artifacts=[
             RemoteIndexEntry(
                 path=PurePosixPath(entry["path"]),
+                fingerprint=entry["fingerprint"],
                 metadata=entry["metadata"],
             )
             for entry in data["artifacts"]
@@ -82,6 +86,7 @@ def _entry_from_artifact(
 ) -> RemoteIndexEntry:
     return RemoteIndexEntry(
         path=PurePosixPath(*artifact.relative_path.parts),
+        fingerprint=compute_artifact_fingerprint(artifact),
         metadata=artifact.metadata,
     )
 
@@ -145,6 +150,7 @@ def rebuild_remote_index(
         artifacts=[
             RemoteIndexEntry(
                 path=artifact.path,
+                fingerprint=compute_artifact_fingerprint(artifact),
                 metadata=artifact.metadata,
             )
             for artifact in artifacts
@@ -175,18 +181,6 @@ def remote_artifacts_from_index(
         )
         for entry in index.artifacts
     ]
-
-
-def add_artifact_to_remote_index(
-    remote_name: str,
-    artifact: Artifact,
-) -> None: ...
-
-
-def remove_artifact_from_remote_index(
-    remote_name: str,
-    path: PurePosixPath,
-) -> None: ...
 
 
 def upsert_remote_index_entry(

@@ -1,11 +1,12 @@
+import tomllib
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 
+from phd_artifacts.artifacts.fingerprint import compute_artifact_fingerprint
 from phd_artifacts.artifacts.models import Artifact, RemoteArtifact
+from phd_artifacts.artifacts.remote_index import read_remote_index
 from phd_artifacts.core.config import load_config
 from phd_artifacts.core.progress import NULL_PROGRESS, ProgressReporter
-from phd_artifacts.remotes import get_remote
-from phd_artifacts.remotes.backends.registry import get_backend
 from phd_artifacts.remotes.status import RemoteComparison, RemoteStatus
 
 
@@ -38,10 +39,13 @@ def get_artifact_remote_states(
     remote_name: str,
     progress: ProgressReporter = NULL_PROGRESS,
 ) -> list[ArtifactRemoteState]:
-    """Compare local artifacts against a remote."""
+    """Compare local artifacts against the remote index."""
 
-    remote = get_remote(remote_name)
-    backend = get_backend(remote.type)
+    progress.update("Reading remote index")
+
+    remote_index = read_remote_index(remote_name)
+
+    remote_entries = {entry.path: entry for entry in remote_index.artifacts}
 
     states: list[ArtifactRemoteState] = []
     total = len(artifacts)
@@ -50,17 +54,24 @@ def get_artifact_remote_states(
         progress.update(f"Checking '{artifact.name}' ({index}/{total})")
 
         remote_path = PurePosixPath(*artifact.relative_path.parts)
+        remote_entry = remote_entries.get(remote_path)
 
-        comparison = backend.compare(
-            remote=remote,
-            source=artifact.path,
-            remote_path=remote_path,
-        )
+        if remote_entry is None:
+            status = RemoteStatus.MISSING
+        else:
+            local_fingerprint = compute_artifact_fingerprint(artifact)
+
+            if local_fingerprint == remote_entry.fingerprint:
+                status = RemoteStatus.UP_TO_DATE
+            else:
+                status = RemoteStatus.DIFFERENT
 
         states.append(
             ArtifactRemoteState(
                 artifact=artifact,
-                comparison=comparison,
+                comparison=RemoteComparison(
+                    status=status,
+                ),
             )
         )
 
@@ -84,7 +95,7 @@ def get_remote_artifact_local_states(
 
         destination = artifact_root / Path(*artifact.path.parts)
 
-        if not destination.exists():
+        if not destination.is_dir():
             states.append(
                 RemoteArtifactLocalState(
                     artifact=artifact,
@@ -93,19 +104,52 @@ def get_remote_artifact_local_states(
             )
             continue
 
-        remote = get_remote(artifact.remote)
-        backend = get_backend(remote.type)
+        metadata_path = destination / "metadata.toml"
 
-        comparison = backend.compare(
-            remote=remote,
-            source=destination,
-            remote_path=artifact.path,
+        if not metadata_path.is_file():
+            states.append(
+                RemoteArtifactLocalState(
+                    artifact=artifact,
+                    status=RemoteStatus.DIFFERENT,
+                )
+            )
+            continue
+
+        try:
+            with metadata_path.open("rb") as file:
+                metadata = tomllib.load(file)
+
+        except (OSError, tomllib.TOMLDecodeError):
+            states.append(
+                RemoteArtifactLocalState(
+                    artifact=artifact,
+                    status=RemoteStatus.DIFFERENT,
+                )
+            )
+            continue
+
+        local_artifact = Artifact(
+            path=destination,
+            relative_path=Path(*artifact.path.parts),
+            project=artifact.project,
+            artifact_type=artifact.artifact_type,
+            name=artifact.name,
+            version=artifact.version,
+            metadata=metadata,
         )
+
+        local_fingerprint = compute_artifact_fingerprint(local_artifact)
+        remote_fingerprint = compute_artifact_fingerprint(artifact)
+
+        if local_fingerprint == remote_fingerprint:
+            status = RemoteStatus.UP_TO_DATE
+        else:
+            status = RemoteStatus.DIFFERENT
 
         states.append(
             RemoteArtifactLocalState(
                 artifact=artifact,
-                status=comparison.status,
+                status=status,
             )
         )
 
