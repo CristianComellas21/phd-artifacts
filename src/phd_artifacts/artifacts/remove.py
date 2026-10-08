@@ -3,7 +3,6 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from phd_artifacts.artifacts.models import Artifact, RemoteArtifact
-from phd_artifacts.artifacts.remote_index import remove_remote_index_entry
 from phd_artifacts.core.config import load_config
 from phd_artifacts.remotes import get_remote
 from phd_artifacts.remotes.backends.registry import get_backend
@@ -42,13 +41,4 @@ def perform_remote_removal(
     backend.remove(
         remote=remote,
         remote_path=prepared.artifact.path,
-    )
-
-
-def finalize_remote_removal(
-    prepared: PreparedRemoteRemoval,
-) -> None:
-    remove_remote_index_entry(
-        remote_name=prepared.artifact.remote,
-        artifact_path=prepared.artifact.path,
     )

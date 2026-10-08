@@ -216,11 +216,23 @@ def remove_remote_index_entry(
     remote_name: str,
     artifact_path: PurePosixPath,
 ) -> None:
+    remove_remote_index_entries(
+        remote_name=remote_name,
+        artifact_paths=[artifact_path],
+    )
+
+
+def remove_remote_index_entries(
+    remote_name: str,
+    artifact_paths: list[PurePosixPath],
+) -> None:
     index = read_remote_index(remote_name)
+
+    paths = set(artifact_paths)
 
     updated = RemoteIndex(
         version=index.version,
-        artifacts=[entry for entry in index.artifacts if entry.path != artifact_path],
+        artifacts=[entry for entry in index.artifacts if entry.path not in paths],
     )
 
     write_remote_index(
