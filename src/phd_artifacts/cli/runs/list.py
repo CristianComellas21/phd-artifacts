@@ -129,7 +129,7 @@ def list_runs(
             run.id,
             run.experiment or "-",
             run.model or "-",
-            (run.created_at.strftime("%Y-%m-%d %H:%M") if run.created_at else "-"),
+            (run.created_at.strftime("%Y-%m-%d %H:%M:%S") if run.created_at else "-"),
             "yes" if run.has_checkpoints else "",
         )
 
