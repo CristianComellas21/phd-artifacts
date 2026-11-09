@@ -51,7 +51,7 @@ def add_project(
     }
 
     if python is not None:
-        python = python.expanduser().resolve()
+        python = python.expanduser().absolute()
 
         if not python.is_file():
             raise FileNotFoundError(f"Python executable not found: {python}")
@@ -197,7 +197,7 @@ def update_project(
         project.pop("python", None)
 
     elif python is not None:
-        python = python.expanduser().resolve()
+        python = python.expanduser().absolute()
 
         if not python.is_file():
             raise FileNotFoundError(f"Python executable not found: {python}")
