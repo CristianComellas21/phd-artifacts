@@ -26,7 +26,7 @@ def resolve_project_python(
     if not path.is_absolute():
         path = project_root / path
 
-    path = path.resolve()
+    path = path.absolute()
 
     if not path.is_file():
         raise RuntimeError(f"Project Python not found: {path}")

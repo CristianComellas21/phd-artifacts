@@ -100,7 +100,7 @@ def prompt_project_config(
 
         exporter_args_raw = text("Exporter arguments", default=shlex.join(existing_args))
 
-    python = Path(python_raw).expanduser().resolve() if python_raw else None
+    python = Path(python_raw).expanduser().absolute() if python_raw else None
 
     exporter = exporter or None
 
